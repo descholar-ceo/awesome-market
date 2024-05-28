@@ -9,6 +9,11 @@ interface EnvConfigure {
 
 export const NODE_ENV = 'NODE_ENV';
 export const PORT = 'PORT';
+export const DB_HOST = 'DB_HOST';
+export const DB_PORT = 'DB_PORT';
+export const DB_USERNAME = 'DB_USERNAME';
+export const DB_PASSWORD = 'DB_PASSWORD';
+export const DB_DATABASE = 'DB_DATABASE';
 
 @Injectable()
 export class ConfigService {
@@ -19,8 +24,13 @@ export class ConfigService {
     this.envConfigure = this.validateInput(configure);
   }
 
-  get(key: string): string {
-    return this.envConfigure[key];
+  get<T>(key: string): T {
+    const envValue = this.envConfigure?.[key];
+    if (!!envValue) {
+      return envValue as T;
+    } else {
+      return null;
+    }
   }
 
   private validateInput(envConfigure: EnvConfigure): EnvConfigure {
@@ -30,6 +40,11 @@ export class ConfigService {
         .default(DEVELOPMENT)
         .required(),
       [PORT]: Joi.number().required(),
+      [DB_HOST]: Joi.string().required(),
+      [DB_PORT]: Joi.number().required(),
+      [DB_USERNAME]: Joi.string().required(),
+      [DB_PASSWORD]: Joi.string().required(),
+      [DB_DATABASE]: Joi.string().required(),
     });
 
     const { error, value: validatedEnvConfig } =
