@@ -1,0 +1,5 @@
+FROM node:20.13.1-alpine3.20 AS awesome_api_development_image
+
+WORKDIR /awesome-market
+
+EXPOSE 80
