@@ -23,10 +23,12 @@ services:
   awesome_postgres:
     image: postgres:14-alpine
     container_name: awesome_db_container
+    env_file:
+      - "./.env"
     environment:
-      POSTGRES_USER: awesome
-      POSTGRES_PASSWORD: awesome
-      POSTGRES_DB: awesome_development
+      POSTGRES_USER: $DB_USERNAME
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_DB: $DB_DATABASE
     volumes:
       - type: volume
         source: postgres_data
