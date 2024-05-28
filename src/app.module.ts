@@ -14,6 +14,8 @@ import {
   DB_USERNAME,
   NODE_ENV,
 } from './config/config.service';
+import { UserModule } from './user/user.module';
+import { CustomNamingStrategy } from './config/naming-strategies';
 
 @Module({
   imports: [
@@ -28,14 +30,15 @@ import {
         username: configService.get<string>(DB_USERNAME),
         password: configService.get<string>(DB_PASSWORD),
         database: configService.get<string>(DB_DATABASE),
-        // entities: [__dirname + '/../**/*.entity{.ts,.js}'],
         synchronize: configService.get(NODE_ENV) === PRODUCTION ? false : true,
         retryAttempts: 15,
         retryDelay: 30000,
         autoLoadEntities: true,
+        namingStrategy: new CustomNamingStrategy(),
       }),
       inject: [ConfigService],
     }),
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
