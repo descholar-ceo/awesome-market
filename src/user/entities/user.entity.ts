@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
+import * as bcrypt from 'bcryptjs';
 
 @Entity()
 export class User {
@@ -53,5 +54,7 @@ export class User {
   @BeforeInsert()
   generateUniqId() {
     this.id = uuidV4();
+    const passedPassword = this.password;
+    this.password = bcrypt.hashSync(passedPassword, 10);
   }
 }
