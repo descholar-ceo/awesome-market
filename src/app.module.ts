@@ -16,6 +16,7 @@ import {
 } from './config/config.service';
 import { UserModule } from './user/user.module';
 import { CustomNamingStrategy } from './config/naming-strategies';
+import { ProductModule } from './product/product.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { CustomNamingStrategy } from './config/naming-strategies';
       inject: [ConfigService],
     }),
     UserModule,
+    ProductModule,
   ],
   controllers: [AppController],
   providers: [AppService],
