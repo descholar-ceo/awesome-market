@@ -17,6 +17,7 @@ import {
 import { UserModule } from './user/user.module';
 import { CustomNamingStrategy } from './config/naming-strategies';
 import { ProductModule } from './product/product.module';
+import { RoleModule } from './role/role.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { ProductModule } from './product/product.module';
     }),
     UserModule,
     ProductModule,
+    RoleModule,
   ],
   controllers: [AppController],
   providers: [AppService],
