@@ -9,7 +9,9 @@ interface EnvConfigure {
 
 export const NODE_ENV = 'NODE_ENV';
 export const PORT = 'PORT';
+export const HOST_PORT = 'HOST_PORT';
 export const DB_HOST = 'DB_HOST';
+export const HOST_DB_PORT = 'HOST_DB_PORT';
 export const DB_PORT = 'DB_PORT';
 export const DB_USERNAME = 'DB_USERNAME';
 export const DB_PASSWORD = 'DB_PASSWORD';
@@ -40,7 +42,9 @@ export class ConfigService {
         .default(DEVELOPMENT)
         .required(),
       [PORT]: Joi.number().required(),
+      [HOST_PORT]: Joi.number().required(),
       [DB_HOST]: Joi.string().required(),
+      [HOST_DB_PORT]: Joi.string().required(),
       [DB_PORT]: Joi.number().required(),
       [DB_USERNAME]: Joi.string().required(),
       [DB_PASSWORD]: Joi.string().required(),
