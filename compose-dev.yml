@@ -13,7 +13,7 @@ services:
         source: .
         target: /awesome-market
     ports:
-      - 8700:80
+      - $HOST_PORT:$PORT
     networks:
       - awesome_network
     restart: always
@@ -34,7 +34,7 @@ services:
         source: postgres_data
         target: /var/lib/postgresql
     ports:
-      - 6544:5432
+      - $HOST_DB_PORT:$DB_PORT
     networks:
       - awesome_network
     restart: always
