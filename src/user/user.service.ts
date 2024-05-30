@@ -27,7 +27,7 @@ export class UserService {
     private readonly config: ConfigService,
   ) {}
 
-  async create(createUserData: CreateUserDto) {
+  async create(createUserData: CreateUserDto): Promise<User> {
     const newUser = this.userRepository.create(createUserData);
     const buyerRoleName = this.config.get<string>(BUYER_ROLE);
     let defaultRole = (
@@ -40,7 +40,9 @@ export class UserService {
         name: buyerRoleName,
       });
     }
-    newUser.roles = [defaultRole];
+    if (!createUserData?.roles?.length) {
+      newUser.roles = [defaultRole];
+    }
     const savedUser = await this.userRepository.save(newUser);
     return plainToInstance(User, savedUser, { excludeExtraneousValues: true });
   }

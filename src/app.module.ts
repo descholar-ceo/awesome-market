@@ -9,10 +9,11 @@ import { AppService } from './app.service';
 import { CommonModule } from './common/common.module';
 import { ConfigModule } from './config/config.module';
 import typeorm from './config/typeorm/typeorm.config';
+import { InitModule } from './init/init.module';
+import { InitialAdminProvider } from './init/init.provider';
 import { ProductModule } from './product/product.module';
 import { RoleModule } from './role/role.module';
 import { UserModule } from './user/user.module';
-import { InitModule } from './init/init.module';
 
 @Module({
   imports: [
@@ -33,6 +34,6 @@ import { InitModule } from './init/init.module';
     InitModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, InitialAdminProvider],
 })
 export class AppModule {}
