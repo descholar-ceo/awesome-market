@@ -20,7 +20,7 @@ export const encodeToken = async (dataToEncode, expiresIn): Promise<string> => {
   );
 };
 
-export const decodeToken = async (token: string): Promise<any> => {
+export const decodeToken = (token: string): any => {
   const base4tokenHeader = JSON.parse(base64url.decode(token.split('.')[0]));
   if (
     !base4tokenHeader.alg ||
@@ -29,7 +29,7 @@ export const decodeToken = async (token: string): Promise<any> => {
   ) {
     return false;
   }
-  return await jwt.verify(
+  return jwt.verify(
     token,
     getEnvironmentValue<string>(envConfigure, JWT_SECRET),
   );
