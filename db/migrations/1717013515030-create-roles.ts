@@ -5,7 +5,7 @@ export class CreateRoles1717013515030 implements MigrationInterface {
     await queryRunner.query(`
               CREATE TABLE "roles" (
                 "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-                "name" character varying NOT NULL,
+                "name" character varying NOT NULL UNIQUE,
                 "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
               );

@@ -5,8 +5,8 @@ export class CreateUsers1717013107168 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "users" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "email" character varying NOT NULL,
-        "phone_number" character varying NOT NULL,
+        "email" character varying NOT NULL UNIQUE,
+        "phone_number" character varying NOT NULL UNIQUE,
         "password" character varying NOT NULL,
         "first_name" character varying NOT NULL,
         "last_name" character varying NOT NULL,

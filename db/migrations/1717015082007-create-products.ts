@@ -7,7 +7,7 @@ export class CreateProducts1717015082007 implements MigrationInterface {
             "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
             "name" character varying NOT NULL,
             "description" character varying,
-            "code" character varying NOT NULL,
+            "code" character varying NOT NULL UNIQUE,
             "unit_price" integer NOT NULL,
             "thumbnail" character varying NOT NULL,
             "created_by" uuid NOT NULL,
