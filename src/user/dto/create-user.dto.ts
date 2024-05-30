@@ -1,6 +1,8 @@
+import { Role } from '@/role/entities/role.entity';
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   MaxLength,
   MinLength,
@@ -27,4 +29,7 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   phoneNumber: string;
+
+  @IsOptional()
+  roles?: Role[];
 }

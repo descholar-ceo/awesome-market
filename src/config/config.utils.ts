@@ -36,6 +36,11 @@ export const ADMIN_ROLE = 'ADMIN_ROLE';
 export const JWT_SECRET = 'JWT_SECRET';
 export const REFRESH_JWT_EXPIRES = 'REFRESH_JWT_EXPIRES';
 export const ACCESS_JWT_EXPIRES = 'ACCESS_JWT_EXPIRES';
+export const INITIAL_ADMIN_EMAIL = 'INITIAL_ADMIN_EMAIL';
+export const INITIAL_ADMIN_PHONE = 'INITIAL_ADMIN_PHONE';
+export const INITIAL_ADMIN_FNAME = 'INITIAL_ADMIN_FNAME';
+export const INITIAL_ADMIN_LNAME = 'INITIAL_ADMIN_LNAME';
+export const INITIAL_ADMIN_PASSWORD = 'INITIAL_ADMIN_PASSWORD';
 
 export const validateEnvironment = (
   envConfigure: EnvConfigure,
@@ -59,6 +64,11 @@ export const validateEnvironment = (
     [JWT_SECRET]: Joi.string().required(),
     [ACCESS_JWT_EXPIRES]: Joi.string().required(),
     [REFRESH_JWT_EXPIRES]: Joi.string().required(),
+    [INITIAL_ADMIN_EMAIL]: Joi.string().required(),
+    [INITIAL_ADMIN_PHONE]: Joi.string().required(),
+    [INITIAL_ADMIN_FNAME]: Joi.string().required(),
+    [INITIAL_ADMIN_LNAME]: Joi.string().required(),
+    [INITIAL_ADMIN_PASSWORD]: Joi.string().required(),
   });
 
   const { error, value: validatedEnvConfig } =
