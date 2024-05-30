@@ -41,6 +41,9 @@ export const INITIAL_ADMIN_PHONE = 'INITIAL_ADMIN_PHONE';
 export const INITIAL_ADMIN_FNAME = 'INITIAL_ADMIN_FNAME';
 export const INITIAL_ADMIN_LNAME = 'INITIAL_ADMIN_LNAME';
 export const INITIAL_ADMIN_PASSWORD = 'INITIAL_ADMIN_PASSWORD';
+export const SENDGRID_API_KEY = 'SENDGRID_API_KEY';
+export const APP_MAILING_ADDRESS = 'APP_MAILING_ADDRESS';
+export const API_URL = 'API_URL';
 
 export const validateEnvironment = (
   envConfigure: EnvConfigure,
@@ -69,6 +72,9 @@ export const validateEnvironment = (
     [INITIAL_ADMIN_FNAME]: Joi.string().required(),
     [INITIAL_ADMIN_LNAME]: Joi.string().required(),
     [INITIAL_ADMIN_PASSWORD]: Joi.string().required(),
+    [SENDGRID_API_KEY]: Joi.string().required(),
+    [APP_MAILING_ADDRESS]: Joi.string().required(),
+    [API_URL]: Joi.string().required(),
   });
 
   const { error, value: validatedEnvConfig } =
