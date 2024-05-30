@@ -74,33 +74,40 @@ export class UserService {
         await this.find({ email: this.config.get<string>(INITIAL_ADMIN_EMAIL) })
       )?.[0];
       if (!!adminUser?.email) {
-        const approvalUrl = `${this.config.get<string>(API_URL)}/users/approve-seller-account?seller-id=${savedUser.id}`;
-        const { html, text } = prepareAccountApprovalEmailBody({
-          approvalUrl,
-          admin: adminUser,
-          seller: savedUser,
-        });
-        await this.mailService.sendEmail({
-          fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
-          emailHtmlBody: html,
-          emailTextBody: text,
-          emailSubject: 'Account Approval Request for New Seller Registration',
-          personalizations: [{ to: { email: adminUser.email } }],
-        });
-        const { html: pendingHtml, text: pendingText } =
-          prepareAccountPendingNotifyBody({
+        try {
+          const approvalUrl = `${this.config.get<string>(API_URL)}/users/approve-seller-account?seller-id=${savedUser.id}`;
+          const { html, text } = prepareAccountApprovalEmailBody({
             approvalUrl,
             admin: adminUser,
             seller: savedUser,
           });
-        await this.mailService.sendEmail({
-          fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
-          emailHtmlBody: pendingHtml,
-          emailTextBody: pendingText,
-          emailSubject:
-            'Pending Verification and Approval of Your Seller Account',
-          personalizations: [{ to: { email: savedUser.email } }],
-        });
+          await this.mailService.sendEmail({
+            fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+            emailHtmlBody: html,
+            emailTextBody: text,
+            emailSubject:
+              'Account Approval Request for New Seller Registration',
+            personalizations: [{ to: { email: adminUser.email } }],
+          });
+          const { html: pendingHtml, text: pendingText } =
+            prepareAccountPendingNotifyBody({
+              approvalUrl,
+              admin: adminUser,
+              seller: savedUser,
+            });
+          await this.mailService.sendEmail({
+            fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+            emailHtmlBody: pendingHtml,
+            emailTextBody: pendingText,
+            emailSubject:
+              'Pending Verification and Approval of Your Seller Account',
+            personalizations: [{ to: { email: savedUser.email } }],
+          });
+        } catch (err) {
+          if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+            Logger.error(err);
+          }
+        }
       }
     }
     return plainToInstance(User, savedUser, { excludeExtraneousValues: true });
@@ -190,22 +197,28 @@ export class UserService {
     }
     const updatedSeller = await this.update(sellerId, { isActive: true });
     if (!!updatedSeller?.isActive) {
-      const { html, text } = prepareAccountApprovedMessageBody({
-        approvalUrl: null,
-        admin: null,
-        seller: updatedSeller,
-      });
-      await this.mailService.sendEmail({
-        fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
-        emailHtmlBody: html,
-        emailTextBody: text,
-        emailSubject: 'Your Seller Account Has Been Approved!',
-        personalizations: [{ to: { email: updatedSeller.email } }],
-      });
-      return {
-        status: statusCodes.OK,
-        message: statusNames.OK,
-      };
+      try {
+        const { html, text } = prepareAccountApprovedMessageBody({
+          approvalUrl: null,
+          admin: null,
+          seller: updatedSeller,
+        });
+        await this.mailService.sendEmail({
+          fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+          emailHtmlBody: html,
+          emailTextBody: text,
+          emailSubject: 'Your Seller Account Has Been Approved!',
+          personalizations: [{ to: { email: updatedSeller.email } }],
+        });
+        return {
+          status: statusCodes.OK,
+          message: statusNames.OK,
+        };
+      } catch (err) {
+        if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+          Logger.error(err);
+        }
+      }
     }
     return {
       status: statusCodes.INTERNAL_SERVER_ERROR,

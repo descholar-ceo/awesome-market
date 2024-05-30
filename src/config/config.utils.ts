@@ -72,8 +72,8 @@ export const validateEnvironment = (
     [INITIAL_ADMIN_FNAME]: Joi.string().required(),
     [INITIAL_ADMIN_LNAME]: Joi.string().required(),
     [INITIAL_ADMIN_PASSWORD]: Joi.string().required(),
-    [SENDGRID_API_KEY]: Joi.string().required(),
-    [APP_MAILING_ADDRESS]: Joi.string().required(),
+    [SENDGRID_API_KEY]: Joi.string().optional(),
+    [APP_MAILING_ADDRESS]: Joi.string().optional(),
     [API_URL]: Joi.string().required(),
   });
 
