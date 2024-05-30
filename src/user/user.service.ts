@@ -3,7 +3,7 @@ import { decodeToken, encodeToken } from '@/common/utils/token.utils';
 import { ConfigService } from '@/config/config.service';
 import {
   ACCESS_JWT_EXPIRES,
-  DEFAULT_ROLE,
+  BUYER_ROLE,
   NODE_ENV,
   REFRESH_JWT_EXPIRES,
 } from '@/config/config.utils';
@@ -29,19 +29,20 @@ export class UserService {
 
   async create(createUserData: CreateUserDto) {
     const newUser = this.userRepository.create(createUserData);
+    const buyerRoleName = this.config.get<string>(BUYER_ROLE);
     let defaultRole = (
       await this.roleService.find({
-        name: this.config.get<string>(DEFAULT_ROLE),
+        name: buyerRoleName,
       })
     )?.[0];
     if (!defaultRole) {
       defaultRole = await this.roleService.create({
-        name: this.config.get<string>(DEFAULT_ROLE),
+        name: buyerRoleName,
       });
     }
     newUser.roles = [defaultRole];
-    const res = await this.userRepository.save(newUser);
-    return plainToInstance(User, res, { excludeExtraneousValues: true });
+    const savedUser = await this.userRepository.save(newUser);
+    return plainToInstance(User, savedUser, { excludeExtraneousValues: true });
   }
 
   async login(loginData: LoginDto): Promise<LoginResponseDto> {
