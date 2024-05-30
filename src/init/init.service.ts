@@ -2,12 +2,14 @@ import { PRODUCTION } from '@/common/constants.common';
 import { ConfigService } from '@/config/config.service';
 import {
   ADMIN_ROLE,
+  BUYER_ROLE,
   INITIAL_ADMIN_EMAIL,
   INITIAL_ADMIN_FNAME,
   INITIAL_ADMIN_LNAME,
   INITIAL_ADMIN_PASSWORD,
   INITIAL_ADMIN_PHONE,
   NODE_ENV,
+  SELLER_ROLE,
 } from '@/config/config.utils';
 import { RoleService } from '@/role/role.service';
 import { UserService } from '@/user/user.service';
@@ -23,6 +25,8 @@ export class InitService {
 
   async createInitialDatabaseDataNeededToWork(): Promise<void> {
     const adminRoleName = this.config.get<string>(ADMIN_ROLE);
+    const buyerRoleName = this.config.get<string>(BUYER_ROLE);
+    const sellerRoleName = this.config.get<string>(SELLER_ROLE);
     const nodeEnv = this.config.get<string>(NODE_ENV);
     const adminUserEmail = this.config.get<string>(INITIAL_ADMIN_EMAIL);
     let adminRole = (
@@ -39,6 +43,40 @@ export class InitService {
       if (nodeEnv !== PRODUCTION) {
         Logger.debug(
           'Initial admin role name already exists, skipping its initialzation...',
+        );
+      }
+    }
+    let buyerRole = (
+      await this.roleService.find({
+        name: buyerRoleName,
+      })
+    )?.[0];
+    if (!buyerRole) {
+      if (nodeEnv !== PRODUCTION) {
+        Logger.debug('Initial buyer role name does not exist, creating it...');
+      }
+      buyerRole = await this.roleService.create({ name: buyerRoleName });
+    } else {
+      if (nodeEnv !== PRODUCTION) {
+        Logger.debug(
+          'Initial buyer role name already exists, skipping its initialzation...',
+        );
+      }
+    }
+    let sellerRole = (
+      await this.roleService.find({
+        name: sellerRoleName,
+      })
+    )?.[0];
+    if (!sellerRole) {
+      if (nodeEnv !== PRODUCTION) {
+        Logger.debug('Initial seller role name does not exist, creating it...');
+      }
+      sellerRole = await this.roleService.create({ name: sellerRoleName });
+    } else {
+      if (nodeEnv !== PRODUCTION) {
+        Logger.debug(
+          'Initial seller role name already exists, skipping its initialzation...',
         );
       }
     }
