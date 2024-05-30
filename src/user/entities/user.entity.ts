@@ -9,46 +9,53 @@ import {
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
 import * as bcrypt from 'bcryptjs';
+import { Exclude, Expose } from 'class-transformer';
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
+  @Expose()
   id: string;
 
   @Column({ unique: true })
+  @Expose()
   email: string;
 
   @Column({ unique: true })
+  @Expose()
   phoneNumber: string;
 
   @Column()
+  @Exclude()
   password: string;
 
   @Column()
+  @Expose()
   firstName: string;
 
   @Column()
+  @Expose()
   lastName: string;
 
   @Column({ default: true })
+  @Expose()
   isActive: boolean;
 
-  @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    nullable: false,
-  })
+  @Column()
+  @Expose()
   createdAt: Date;
 
-  @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
+  @Column()
+  @Expose()
   updatedAt: Date;
 
   @ManyToMany(() => Role, (role) => role.users)
-  @JoinTable({ name: 'user_roles' })
+  @JoinTable({
+    name: 'user_roles',
+    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+  })
+  @Expose()
   roles: Role[];
 
   @BeforeInsert()

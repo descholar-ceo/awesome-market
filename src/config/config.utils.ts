@@ -30,6 +30,7 @@ export const DB_PORT = 'DB_PORT';
 export const DB_USERNAME = 'DB_USERNAME';
 export const DB_PASSWORD = 'DB_PASSWORD';
 export const DB_DATABASE = 'DB_DATABASE';
+export const DEFAULT_ROLE = 'DEFAULT_ROLE';
 
 export const validateEnvironment = (
   envConfigure: EnvConfigure,
@@ -47,6 +48,7 @@ export const validateEnvironment = (
     [DB_USERNAME]: Joi.string().required(),
     [DB_PASSWORD]: Joi.string().required(),
     [DB_DATABASE]: Joi.string().required(),
+    [DEFAULT_ROLE]: Joi.string().required(),
   });
 
   const { error, value: validatedEnvConfig } =
