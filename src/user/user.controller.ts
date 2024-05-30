@@ -36,6 +36,11 @@ export class UserController {
     return await this.userService.refreshAccessToken(refreshToken);
   }
 
+  @Get('/approve-seller-account')
+  async approveSellerAccount(@Query('seller-id') sellerId: string) {
+    return await this.userService.approveSellerAccount(sellerId);
+  }
+
   @Get()
   findAll() {
     return this.userService.findAll();

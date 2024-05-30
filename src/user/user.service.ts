@@ -25,8 +25,10 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import {
   prepareAccountApprovalEmailBody,
+  prepareAccountApprovedMessageBody,
   prepareAccountPendingNotifyBody,
 } from './user.utils';
+import { CommonResponseDto } from '@/common/common.dtos';
 
 @Injectable()
 export class UserService {
@@ -164,6 +166,51 @@ export class UserService {
         message: 'Refresh token invalid',
       };
     }
+  }
+
+  async approveSellerAccount(sellerId: string): Promise<CommonResponseDto> {
+    if (!sellerId) {
+      return {
+        status: statusCodes.BAD_REQUEST,
+        message: 'Seller Id is required',
+      };
+    }
+    const sellerUser = (await this.find({ id: sellerId }))?.[0];
+    if (!sellerUser) {
+      return {
+        status: statusCodes.NOT_FOUND,
+        message: 'Seller Not Found',
+      };
+    }
+    if (sellerUser.isActive) {
+      return {
+        status: statusCodes.CONFLICT,
+        message: 'Seller is already active',
+      };
+    }
+    const updatedSeller = await this.update(sellerId, { isActive: true });
+    if (!!updatedSeller?.isActive) {
+      const { html, text } = prepareAccountApprovedMessageBody({
+        approvalUrl: null,
+        admin: null,
+        seller: updatedSeller,
+      });
+      await this.mailService.sendEmail({
+        fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+        emailHtmlBody: html,
+        emailTextBody: text,
+        emailSubject: 'Your Seller Account Has Been Approved!',
+        personalizations: [{ to: { email: updatedSeller.email } }],
+      });
+      return {
+        status: statusCodes.OK,
+        message: statusNames.OK,
+      };
+    }
+    return {
+      status: statusCodes.INTERNAL_SERVER_ERROR,
+      message: statusNames.INTERNAL_SERVER_ERROR,
+    };
   }
 
   async findAll() {
