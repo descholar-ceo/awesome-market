@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { execSync } = require('child_process');
+import { execSync } from 'child_process';
 
 const migrationName = process.argv[2];
 

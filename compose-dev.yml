@@ -5,13 +5,13 @@ services:
       dockerfile: deployments/dev/docker/dockerfile
       target: awesome_api_development_image
     container_name: awesome_api_container
-    command: yarn start:debug
-    env_file:
-      - "./.env"
     volumes:
       - type: bind
         source: .
         target: /awesome-market
+    command: sh -c "yarn migration:run && yarn start:debug"
+    env_file:
+      - "./.env"
     ports:
       - $HOST_PORT:$PORT
     networks:

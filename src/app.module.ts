@@ -12,6 +12,7 @@ import typeorm from './config/typeorm/typeorm.config';
 import { ProductModule } from './product/product.module';
 import { RoleModule } from './role/role.module';
 import { UserModule } from './user/user.module';
+import { InitModule } from './init/init.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { UserModule } from './user/user.module';
     UserModule,
     ProductModule,
     RoleModule,
+    InitModule,
   ],
   controllers: [AppController],
   providers: [AppService],
