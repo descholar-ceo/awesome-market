@@ -18,13 +18,11 @@ export class AuthGuard implements CanActivate {
   ): boolean | Promise<boolean> | Observable<boolean> {
     const request = context.switchToHttp().getRequest();
     const {
-      headers: { authorization },
+      headers: { authorization, jwt, token },
     } = request ?? {};
-    if (!authorization) {
-      return false;
-    }
+    if (!authorization && !jwt && !token) return false;
     try {
-      const user = decodeToken(authorization);
+      const user = decodeToken(authorization ?? jwt ?? token);
       if (!!user) {
         request.user = user;
         return true;
