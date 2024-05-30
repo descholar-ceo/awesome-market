@@ -23,7 +23,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "ts-node ./node_modules/typeorm/cli",
     "migration:run": "typeorm-ts-node-commonjs migration:run --dataSource ./src/config/typeorm/typeorm.config.ts",
-    "migration:create": "node ./src/config/typeorm/create-migration.config.js",
+    "migration:create": "ts-node ./src/config/typeorm/create-migration.config.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert --dataSource ./src/config/typeorm/typeorm.config.ts"
   },
   "dependencies": {
