@@ -4,7 +4,7 @@ import {
   BeforeInsert,
   Column,
   Entity,
-  OneToMany,
+  ManyToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
@@ -19,7 +19,7 @@ export class Role {
   @Expose()
   name: string;
 
-  @OneToMany(() => User, (user) => user.roles)
+  @ManyToMany(() => User, (user) => user.roles)
   @Expose()
   users: User[];
 
