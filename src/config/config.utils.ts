@@ -31,6 +31,9 @@ export const DB_USERNAME = 'DB_USERNAME';
 export const DB_PASSWORD = 'DB_PASSWORD';
 export const DB_DATABASE = 'DB_DATABASE';
 export const DEFAULT_ROLE = 'DEFAULT_ROLE';
+export const JWT_SECRET = 'JWT_SECRET';
+export const REFRESH_JWT_EXPIRES = 'REFRESH_JWT_EXPIRES';
+export const ACCESS_JWT_EXPIRES = 'ACCESS_JWT_EXPIRES';
 
 export const validateEnvironment = (
   envConfigure: EnvConfigure,
@@ -49,6 +52,9 @@ export const validateEnvironment = (
     [DB_PASSWORD]: Joi.string().required(),
     [DB_DATABASE]: Joi.string().required(),
     [DEFAULT_ROLE]: Joi.string().required(),
+    [JWT_SECRET]: Joi.string().required(),
+    [ACCESS_JWT_EXPIRES]: Joi.string().required(),
+    [REFRESH_JWT_EXPIRES]: Joi.string().required(),
   });
 
   const { error, value: validatedEnvConfig } =
