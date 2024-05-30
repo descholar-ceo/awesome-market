@@ -1,4 +1,5 @@
 import { User } from '@/user/entities/user.entity';
+import { Expose } from 'class-transformer';
 import {
   BeforeInsert,
   Column,
@@ -11,22 +12,23 @@ import { v4 as uuidV4 } from 'uuid';
 @Entity()
 export class Role {
   @PrimaryGeneratedColumn('uuid')
+  @Expose()
   id: string;
 
   @Column({ unique: true })
+  @Expose()
   name: string;
 
   @OneToMany(() => User, (user) => user.roles)
+  @Expose()
   users: User[];
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column()
+  @Expose()
   createdAt: Date;
 
-  @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
+  @Column()
+  @Expose()
   updatedAt: Date;
 
   @BeforeInsert()

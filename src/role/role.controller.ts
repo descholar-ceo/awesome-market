@@ -26,8 +26,8 @@ export class RoleController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.roleService.findOne(id);
+  findById(@Param('id') id: string) {
+    return this.roleService.findById(id);
   }
 
   @Patch(':id')
