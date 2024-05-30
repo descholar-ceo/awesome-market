@@ -30,7 +30,9 @@ export const DB_PORT = 'DB_PORT';
 export const DB_USERNAME = 'DB_USERNAME';
 export const DB_PASSWORD = 'DB_PASSWORD';
 export const DB_DATABASE = 'DB_DATABASE';
-export const DEFAULT_ROLE = 'DEFAULT_ROLE';
+export const BUYER_ROLE = 'BUYER_ROLE';
+export const SELLER_ROLE = 'SELLER_ROLE';
+export const ADMIN_ROLE = 'ADMIN_ROLE';
 export const JWT_SECRET = 'JWT_SECRET';
 export const REFRESH_JWT_EXPIRES = 'REFRESH_JWT_EXPIRES';
 export const ACCESS_JWT_EXPIRES = 'ACCESS_JWT_EXPIRES';
@@ -51,7 +53,9 @@ export const validateEnvironment = (
     [DB_USERNAME]: Joi.string().required(),
     [DB_PASSWORD]: Joi.string().required(),
     [DB_DATABASE]: Joi.string().required(),
-    [DEFAULT_ROLE]: Joi.string().required(),
+    [BUYER_ROLE]: Joi.string().required(),
+    [SELLER_ROLE]: Joi.string().required(),
+    [ADMIN_ROLE]: Joi.string().required(),
     [JWT_SECRET]: Joi.string().required(),
     [ACCESS_JWT_EXPIRES]: Joi.string().required(),
     [REFRESH_JWT_EXPIRES]: Joi.string().required(),
