@@ -5,13 +5,13 @@ import {
   Column,
   Entity,
   ManyToMany,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
 
 @Entity()
 export class Role {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn()
   @Expose()
   id: string;
 

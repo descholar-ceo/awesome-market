@@ -1,19 +1,19 @@
 import { Role } from '@/role/entities/role.entity';
+import * as bcrypt from 'bcryptjs';
+import { Exclude, Expose } from 'class-transformer';
 import {
   BeforeInsert,
   Column,
   Entity,
   JoinTable,
   ManyToMany,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
-import * as bcrypt from 'bcryptjs';
-import { Exclude, Expose } from 'class-transformer';
 
 @Entity()
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn()
   @Expose()
   id: string;
 
