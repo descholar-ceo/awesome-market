@@ -1,7 +1,11 @@
-import { ADMIN_ROLE, BUYER_ROLE, SELLER_ROLE } from '@/config/config.utils';
 import { Roles } from '@/decorators/roles/roles.decorator';
 import { AuthGuard } from '@/guards/auth/auth.guard';
 import { RolesGuard } from '@/guards/roles/roles.guard';
+import {
+  ADMIN_ROLE_NAME,
+  BUYER_ROLE_NAME,
+  SELLER_ROLE_NAME,
+} from '@/role/role.constants';
 import {
   Body,
   Controller,
@@ -12,11 +16,6 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import {
-  dotenvConfig,
-  getEnvironmentValue,
-  validateEnvironment,
-} from './../config/config.utils';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductService } from './product.service';
@@ -26,21 +25,13 @@ import { ProductService } from './product.service';
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
-  @Roles([
-    getEnvironmentValue<string>(validateEnvironment(dotenvConfig), ADMIN_ROLE),
-    getEnvironmentValue<string>(validateEnvironment(dotenvConfig), BUYER_ROLE),
-    getEnvironmentValue<string>(validateEnvironment(dotenvConfig), SELLER_ROLE),
-  ])
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME, BUYER_ROLE_NAME])
   @Post()
   async create(@Body() createProductData: CreateProductDto) {
     return await this.productService.create(createProductData);
   }
 
-  @Roles([
-    getEnvironmentValue<string>(validateEnvironment(dotenvConfig), ADMIN_ROLE),
-    getEnvironmentValue<string>(validateEnvironment(dotenvConfig), BUYER_ROLE),
-    getEnvironmentValue<string>(validateEnvironment(dotenvConfig), SELLER_ROLE),
-  ])
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME, BUYER_ROLE_NAME])
   @Get()
   findAll() {
     return this.productService.findAll();
