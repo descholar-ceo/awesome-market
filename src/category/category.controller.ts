@@ -1,22 +1,26 @@
+import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
+import { Roles } from '@/decorators/roles/roles.decorator';
+import { AuthGuard } from '@/guards/auth/auth.guard';
+import { RolesGuard } from '@/guards/roles/roles.guard';
+import { ADMIN_ROLE_NAME, SELLER_ROLE_NAME } from '@/role/role.constants';
+import { User } from '@/user/entities/user.entity';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
   UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
-import { User } from '@/user/entities/user.entity';
-import { AuthGuard } from '@/guards/auth/auth.guard';
-import { RolesGuard } from '@/guards/roles/roles.guard';
-import { Roles } from '@/decorators/roles/roles.decorator';
-import { ADMIN_ROLE_NAME, SELLER_ROLE_NAME } from '@/role/role.constants';
+import { FindCategoryFiltersDto } from './dto/find-category.dto';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('categories')
@@ -33,8 +37,9 @@ export class CategoryController {
   }
 
   @Get()
-  findAll() {
-    return this.categoryService.findAll();
+  @UsePipes(new ValidationPipe())
+  findWithFilters(@Query() filters: FindCategoryFiltersDto) {
+    return this.categoryService.findWithFilters(filters);
   }
 
   @Get(':id')
