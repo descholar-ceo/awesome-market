@@ -16,14 +16,14 @@ import { User } from '@/user/entities/user.entity';
 import { AuthGuard } from '@/guards/auth/auth.guard';
 import { RolesGuard } from '@/guards/roles/roles.guard';
 import { Roles } from '@/decorators/roles/roles.decorator';
-import { ADMIN_ROLE_NAME } from '@/role/role.constants';
+import { ADMIN_ROLE_NAME, SELLER_ROLE_NAME } from '@/role/role.constants';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('categories')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
-  @Roles([ADMIN_ROLE_NAME])
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Post()
   create(
     @Body() createCategoryDto: CreateCategoryDto,
