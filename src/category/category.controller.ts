@@ -25,6 +25,8 @@ import {
   FindCategoryFiltersDto,
 } from './dto/find-category.dto';
 import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
+import { CommonResponseDto } from '@/common/common.dtos';
+import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('categories')
@@ -42,26 +44,34 @@ export class CategoryController {
 
   @Get()
   @UsePipes(new ValidationPipe())
-  findWithFilters(@Query() filters: FindCategoryFiltersDto) {
+  findWithFilters(@Query('filters') filters: FindCategoryFiltersDto) {
     return this.categoryService.findWithFilters(filters);
   }
 
   @Get(':id')
   @UsePipes(new ValidateUuidPipe())
-  findOne(@Param('id') id: string) {
+  findById(@Param('id') id: string) {
     return this.categoryService.findById(id);
   }
 
   @Patch(':id')
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
+  @UsePipes(new ValidateIdFromParam())
   update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
+    @CurrentUser() currUser: User,
   ) {
-    return this.categoryService.update(+id, updateCategoryDto);
+    return this.categoryService.update(id, updateCategoryDto, currUser);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.categoryService.remove(+id);
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
+  @UsePipes(new ValidateIdFromParam())
+  async remove(
+    @Param('id') id: string,
+    @CurrentUser() currUser: User,
+  ): Promise<CommonResponseDto> {
+    return this.categoryService.remove(id, currUser);
   }
 }

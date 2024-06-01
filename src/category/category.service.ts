@@ -1,10 +1,15 @@
+import { isUserAdmin } from './../user/user.utils';
 import { prepareDateInterval } from '@/common/utils/dates.utils';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
 import { ConfigService } from '@/config/config.service';
 import { User } from '@/user/entities/user.entity';
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { DeleteResult, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import {
   CategoriesResponseDto,
@@ -14,6 +19,7 @@ import {
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
 import { plainToInstance } from 'class-transformer';
+import { CommonResponseDto } from '@/common/common.dtos';
 
 @Injectable()
 export class CategoryService {
@@ -142,11 +148,52 @@ export class CategoryService {
     return { status: statusCodes.NOT_FOUND, message: statusNames.NOT_FOUND };
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+  async update(
+    id: string,
+    updateCategoryData: UpdateCategoryDto,
+    currUser: User,
+  ): Promise<CategoryResponseDto> {
+    const category = (await this.findById(id))?.data;
+    if (!category) {
+      throw new NotFoundException(`Category with ID ${id} not found`);
+    }
+    if (!isUserAdmin(currUser) && category.createdBy?.id !== currUser.id) {
+      throw new ForbiddenException(
+        'You cannot update a category, that you did not create',
+      );
+    }
+    Object.assign(category, updateCategoryData);
+    const updatedCategory = await this.categoryRepository.save(category);
+    if (!!updatedCategory) {
+      return {
+        status: statusCodes.OK,
+        message: statusNames.OK,
+        data: updatedCategory,
+      };
+    }
+    return {
+      status: statusCodes.INTERNAL_SERVER_ERROR,
+      message: 'Something ent wrong, try again!',
+    };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+  async remove(id: string, currUser: User): Promise<CommonResponseDto> {
+    const category = (await this.findById(id))?.data;
+    if (!category) {
+      throw new NotFoundException(`Category with ID ${id} not found`);
+    }
+    if (!isUserAdmin(currUser) && category.createdBy?.id !== currUser.id) {
+      throw new ForbiddenException(
+        'You cannot delete a category, that you did not create',
+      );
+    }
+    const { affected }: DeleteResult = await this.categoryRepository.delete(id);
+    if (!!affected) {
+      return { status: statusCodes.OK, message: statusNames.OK };
+    }
+    return {
+      status: statusCodes.INTERNAL_SERVER_ERROR,
+      message: 'Something went wrong, try again',
+    };
   }
 }

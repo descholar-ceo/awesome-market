@@ -8,11 +8,15 @@ import {
   Delete,
   Headers,
   Query,
+  UsePipes,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginDto } from './dto/login.dto';
+import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
+import { CommonResponseDto } from '@/common/common.dtos';
+import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
 
 @Controller('users')
 export class UserController {
@@ -21,7 +25,7 @@ export class UserController {
   @Post()
   async create(
     @Body() createUserData: CreateUserDto,
-    @Query('user-type') userType: string,
+    @Query('user-type') userType?: string,
   ) {
     return await this.userService.create(createUserData, userType);
   }
@@ -47,17 +51,20 @@ export class UserController {
   }
 
   @Get(':id')
+  @UsePipes(new ValidateUuidPipe())
   findOne(@Param('id') id: string) {
     return this.userService.findOne(id);
   }
 
   @Patch(':id')
+  @UsePipes(new ValidateIdFromParam())
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @UsePipes(new ValidateUuidPipe())
+  async remove(@Param('id') id: string): Promise<CommonResponseDto> {
     return this.userService.remove(id);
   }
 }
