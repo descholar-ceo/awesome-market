@@ -43,3 +43,8 @@ export class CategoriesResponseDto {
   message: string;
   data?: CategoriesDataDto;
 }
+export class CategoryResponseDto {
+  status: number;
+  message: string;
+  data?: Category;
+}

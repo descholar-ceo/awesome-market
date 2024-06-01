@@ -8,10 +8,12 @@ import { Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import {
   CategoriesResponseDto,
+  CategoryResponseDto,
   FindCategoryFiltersDto,
 } from './dto/find-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class CategoryService {
@@ -23,11 +25,18 @@ export class CategoryService {
   async create(
     createCategoryData: CreateCategoryDto,
     currUser: User,
-  ): Promise<Category> {
+  ): Promise<CategoryResponseDto> {
     const newCategory = this.categoryRepository.create(createCategoryData);
     newCategory.createdBy = currUser;
     newCategory.updatedBy = currUser;
-    return await this.categoryRepository.save(newCategory);
+    const category = await this.categoryRepository.save(newCategory);
+    if (!!category) {
+      return {
+        status: statusCodes.CREATED,
+        message: statusNames.CREATED,
+        data: category,
+      };
+    }
   }
 
   async findWithFilters(
@@ -91,6 +100,8 @@ export class CategoryService {
       };
     }
     const categories = await findCategoriesQuery
+      .leftJoinAndSelect('category.createdBy', 'createdBy')
+      .leftJoinAndSelect('category.updatedBy', 'updatedBy')
       .skip((pageNumber - 1) * recordsPerPage)
       .take(recordsPerPage)
       .getMany();
@@ -99,7 +110,9 @@ export class CategoryService {
       status: statusCodes.OK,
       message: statusNames.OK,
       data: {
-        categories,
+        categories: plainToInstance(Category, categories, {
+          excludeExtraneousValues: true,
+        }),
         pagination: {
           pages,
           totalRecords,
@@ -110,8 +123,23 @@ export class CategoryService {
     };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
+  async findById(id: string): Promise<CategoryResponseDto> {
+    const category = (
+      await this.categoryRepository.find({
+        where: { id },
+        relations: { createdBy: true, updatedBy: true },
+      })
+    )?.[0];
+    if (!!category) {
+      return {
+        status: statusCodes.OK,
+        message: statusNames.OK,
+        data: plainToInstance(Category, category, {
+          excludeExtraneousValues: true,
+        }),
+      };
+    }
+    return { status: statusCodes.NOT_FOUND, message: statusNames.NOT_FOUND };
   }
 
   update(id: number, updateCategoryDto: UpdateCategoryDto) {
