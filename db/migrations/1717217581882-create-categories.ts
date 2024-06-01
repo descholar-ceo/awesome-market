@@ -5,7 +5,7 @@ export class CreateCategories1717217581882 implements MigrationInterface {
     await queryRunner.query(`
         CREATE TABLE "categories" (
             "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-            "name" character varying NOT NULL,
+            "name" character varying NOT NULL UNIQUE,
             "description" character varying,
             "created_by" uuid NOT NULL,
             "updated_by" uuid NOT NULL,

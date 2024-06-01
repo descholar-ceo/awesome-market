@@ -3,6 +3,7 @@ import {
   BeforeInsert,
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryColumn,
 } from 'typeorm';
@@ -26,9 +27,11 @@ export class Category {
   updatedAt: Date;
 
   @ManyToOne(() => User, (user) => user.createdCategories)
+  @JoinColumn({ name: 'created_by' })
   createdBy: User;
 
   @ManyToOne(() => User, (user) => user.updatedCategories)
+  @JoinColumn({ name: 'updated_by' })
   updatedBy: User;
 
   @BeforeInsert()
