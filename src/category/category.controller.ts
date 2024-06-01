@@ -20,7 +20,11 @@ import {
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { FindCategoryFiltersDto } from './dto/find-category.dto';
+import {
+  CategoryResponseDto,
+  FindCategoryFiltersDto,
+} from './dto/find-category.dto';
+import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('categories')
@@ -32,7 +36,7 @@ export class CategoryController {
   create(
     @Body() createCategoryDto: CreateCategoryDto,
     @CurrentUser() currUser: User,
-  ) {
+  ): Promise<CategoryResponseDto> {
     return this.categoryService.create(createCategoryDto, currUser);
   }
 
@@ -43,8 +47,9 @@ export class CategoryController {
   }
 
   @Get(':id')
+  @UsePipes(new ValidateUuidPipe())
   findOne(@Param('id') id: string) {
-    return this.categoryService.findOne(+id);
+    return this.categoryService.findById(id);
   }
 
   @Patch(':id')

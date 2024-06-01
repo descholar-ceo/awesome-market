@@ -9,6 +9,7 @@ export enum statusCodes {
   INTERNAL_SERVER_ERROR = HttpStatus.INTERNAL_SERVER_ERROR,
   NOT_FOUND = HttpStatus.NOT_FOUND,
   FORBIDDEN = HttpStatus.FORBIDDEN,
+  CREATED = HttpStatus.CREATED,
 }
 
 export enum statusNames {
@@ -20,4 +21,5 @@ export enum statusNames {
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
   NOT_FOUND = 'NOT_FOUND',
   FORBIDDEN = 'FORBIDDEN',
+  CREATED = 'CREATED',
 }
