@@ -7,6 +7,7 @@ import {
   ExecutionContext,
   Injectable,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 
@@ -20,19 +21,21 @@ export class AuthGuard implements CanActivate {
     const {
       headers: { authorization, jwt, token },
     } = request ?? {};
-    if (!authorization && !jwt && !token) return false;
+    if (!authorization && !jwt && !token) {
+      throw new UnauthorizedException('Login first');
+    }
     try {
       const user = decodeToken(authorization ?? jwt ?? token);
       if (!!user) {
         request.user = user;
         return true;
       }
-      return false;
+      throw new UnauthorizedException('Login first');
     } catch (err) {
       if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
         Logger.error(err);
       }
-      return false;
+      throw new UnauthorizedException('Login first');
     }
   }
 }
