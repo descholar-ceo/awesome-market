@@ -28,6 +28,7 @@ export class CategoryService {
     private readonly categoryRepository: Repository<Category>,
     private readonly config: ConfigService,
   ) {}
+
   async create(
     createCategoryData: CreateCategoryDto,
     currUser: User,
@@ -36,13 +37,12 @@ export class CategoryService {
     newCategory.createdBy = currUser;
     newCategory.updatedBy = currUser;
     const category = await this.categoryRepository.save(newCategory);
-    if (!!category) {
-      return {
-        status: statusCodes.CREATED,
-        message: statusNames.CREATED,
-        data: category,
-      };
-    }
+
+    return {
+      status: statusCodes.CREATED,
+      message: statusNames.CREATED,
+      data: category,
+    };
   }
 
   async findWithFilters(
@@ -56,48 +56,19 @@ export class CategoryService {
       createdBy,
       pageNumber,
       recordsPerPage,
-    } = filters ?? {};
-    let startDate, endDate;
-    if (!!createdFromDate || !!createdToDate) {
-      const { startOfTheDay, endOfTheDay } = prepareDateInterval(
-        createdFromDate ? new Date(createdFromDate) : null,
-        createdToDate ? new Date(createdToDate) : null,
-      );
-      startDate = startOfTheDay;
-      endDate = endOfTheDay;
-    }
-    const findCategoriesQuery: SelectQueryBuilder<Category> =
-      this.categoryRepository.createQueryBuilder('category');
+    } = filters;
+    const { startDate, endDate } = this.getDateInterval(
+      createdFromDate,
+      createdToDate,
+    );
+    const findCategoriesQuery = this.buildFindCategoriesQuery(
+      name,
+      description,
+      createdBy,
+      startDate,
+      endDate,
+    );
 
-    if (name) {
-      findCategoriesQuery.andWhere('category.name LIKE :name', {
-        name: `%${name}%`,
-      });
-    }
-
-    if (description) {
-      findCategoriesQuery.andWhere('category.description LIKE :description', {
-        description: `%${description}%`,
-      });
-    }
-
-    if (createdBy) {
-      findCategoriesQuery.andWhere('category.created_by = :createdBy', {
-        createdBy,
-      });
-    }
-
-    if (startDate) {
-      findCategoriesQuery.andWhere('category.createdAt >= :startDate', {
-        startDate,
-      });
-    }
-
-    if (endDate) {
-      findCategoriesQuery.andWhere('category.createdAt <= :endDate', {
-        endDate,
-      });
-    }
     const totalRecords = await findCategoriesQuery.getCount();
     if (totalRecords === 0) {
       return {
@@ -105,13 +76,16 @@ export class CategoryService {
         message: 'No records found',
       };
     }
+
     const categories = await findCategoriesQuery
       .leftJoinAndSelect('category.createdBy', 'createdBy')
       .leftJoinAndSelect('category.updatedBy', 'updatedBy')
       .skip((pageNumber - 1) * recordsPerPage)
       .take(recordsPerPage)
       .getMany();
+
     const pages = Math.ceil(totalRecords / recordsPerPage);
+
     return {
       status: statusCodes.OK,
       message: statusNames.OK,
@@ -130,22 +104,22 @@ export class CategoryService {
   }
 
   async findById(id: string): Promise<CategoryResponseDto> {
-    const category = (
-      await this.categoryRepository.find({
-        where: { id },
-        relations: { createdBy: true, updatedBy: true },
-      })
-    )?.[0];
-    if (!!category) {
-      return {
-        status: statusCodes.OK,
-        message: statusNames.OK,
-        data: plainToInstance(Category, category, {
-          excludeExtraneousValues: true,
-        }),
-      };
+    const category = await this.categoryRepository.findOne({
+      where: { id },
+      relations: ['createdBy', 'updatedBy'],
+    });
+
+    if (!category) {
+      throw new NotFoundException(`Category with ID ${id} not found`);
     }
-    return { status: statusCodes.NOT_FOUND, message: statusNames.NOT_FOUND };
+
+    return {
+      status: statusCodes.OK,
+      message: statusNames.OK,
+      data: plainToInstance(Category, category, {
+        excludeExtraneousValues: true,
+      }),
+    };
   }
 
   async update(
@@ -153,47 +127,94 @@ export class CategoryService {
     updateCategoryData: UpdateCategoryDto,
     currUser: User,
   ): Promise<CategoryResponseDto> {
-    const category = (await this.findById(id))?.data;
+    const category = await this.findById(id);
     if (!category) {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
-    if (!isUserAdmin(currUser) && category.createdBy?.id !== currUser.id) {
+
+    if (!isUserAdmin(currUser) && category.data.createdBy.id !== currUser.id) {
       throw new ForbiddenException(
-        'You cannot update a category, that you did not create',
+        'You cannot update a category that you did not create',
       );
     }
-    Object.assign(category, updateCategoryData);
-    const updatedCategory = await this.categoryRepository.save(category);
-    if (!!updatedCategory) {
-      return {
-        status: statusCodes.OK,
-        message: statusNames.OK,
-        data: updatedCategory,
-      };
-    }
+
+    Object.assign(category.data, updateCategoryData);
+    const updatedCategory = await this.categoryRepository.save(category.data);
+
     return {
-      status: statusCodes.INTERNAL_SERVER_ERROR,
-      message: 'Something ent wrong, try again!',
+      status: statusCodes.OK,
+      message: statusNames.OK,
+      data: updatedCategory,
     };
   }
 
   async remove(id: string, currUser: User): Promise<CommonResponseDto> {
-    const category = (await this.findById(id))?.data;
+    const category = await this.findById(id);
     if (!category) {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
-    if (!isUserAdmin(currUser) && category.createdBy?.id !== currUser.id) {
+
+    if (!isUserAdmin(currUser) && category.data.createdBy.id !== currUser.id) {
       throw new ForbiddenException(
-        'You cannot delete a category, that you did not create',
+        'You cannot delete a category that you did not create',
       );
     }
-    const { affected }: DeleteResult = await this.categoryRepository.delete(id);
-    if (!!affected) {
-      return { status: statusCodes.OK, message: statusNames.OK };
+
+    const deleteResult: DeleteResult = await this.categoryRepository.delete(id);
+    if (!deleteResult.affected) {
+      return {
+        status: statusCodes.INTERNAL_SERVER_ERROR,
+        message: 'Something went wrong, try again',
+      };
     }
-    return {
-      status: statusCodes.INTERNAL_SERVER_ERROR,
-      message: 'Something went wrong, try again',
-    };
+
+    return { status: statusCodes.OK, message: statusNames.OK };
+  }
+
+  private getDateInterval(createdFromDate?: Date, createdToDate?: Date) {
+    if (!createdFromDate && !createdToDate) {
+      return { startDate: undefined, endDate: undefined };
+    }
+
+    const { startOfTheDay, endOfTheDay } = prepareDateInterval(
+      createdFromDate ? new Date(createdFromDate) : null,
+      createdToDate ? new Date(createdToDate) : null,
+    );
+
+    return { startDate: startOfTheDay, endDate: endOfTheDay };
+  }
+
+  private buildFindCategoriesQuery(
+    name?: string,
+    description?: string,
+    createdBy?: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): SelectQueryBuilder<Category> {
+    const query = this.categoryRepository.createQueryBuilder('category');
+
+    if (name) {
+      query.andWhere('category.name LIKE :name', { name: `%${name}%` });
+    }
+
+    if (description) {
+      query.andWhere('category.description LIKE :description', {
+        description: `%${description}%`,
+      });
+    }
+
+    if (createdBy) {
+      query.andWhere('category.createdBy.id = :createdBy', { createdBy });
+    }
+
+    if (startDate) {
+      query.andWhere('category.createdAt >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      query.andWhere('category.createdAt <= :endDate', { endDate });
+    }
+
+    return query;
   }
 }
