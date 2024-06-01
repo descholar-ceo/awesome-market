@@ -23,6 +23,7 @@ services:
   awesome_postgres:
     image: postgres:14-alpine
     container_name: awesome_db_container
+    # command: sh -c "psql -U $DB_USERNAME -d $DB_DATABASE -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'"
     env_file:
       - "./.env"
     environment:

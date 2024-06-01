@@ -1,3 +1,4 @@
+import { Category } from '@/category/entities/category.entity';
 import { Role } from '@/role/entities/role.entity';
 import * as bcrypt from 'bcryptjs';
 import { Exclude, Expose } from 'class-transformer';
@@ -7,6 +8,7 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
+  OneToMany,
   PrimaryColumn,
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
@@ -57,6 +59,14 @@ export class User {
   })
   @Expose()
   roles: Role[];
+
+  @OneToMany(() => Category, (category) => category.createdBy)
+  @Expose()
+  createdCategories: Category[];
+
+  @OneToMany(() => Category, (category) => category.updatedBy)
+  @Expose()
+  updatedCategories: Category[];
 
   @BeforeInsert()
   generateUniqId() {
