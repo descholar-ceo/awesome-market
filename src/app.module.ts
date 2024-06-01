@@ -15,6 +15,7 @@ import { ProductModule } from './product/product.module';
 import { RoleModule } from './role/role.module';
 import { UserModule } from './user/user.module';
 import { MailModule } from './mail/mail.module';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { MailModule } from './mail/mail.module';
     RoleModule,
     InitModule,
     MailModule,
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService, InitialAdminProvider],
