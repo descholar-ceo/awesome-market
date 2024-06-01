@@ -18,7 +18,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { plainToInstance } from 'class-transformer';
-import { Repository } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -247,8 +247,15 @@ export class UserService {
     return await this.userRepository.save(user);
   }
 
-  async remove(id: string) {
-    await this.userRepository.delete(id);
+  async remove(id: string): Promise<CommonResponseDto> {
+    const { affected }: DeleteResult = await this.userRepository.delete(id);
+    if (!!affected) {
+      return { status: statusCodes.OK, message: statusNames.OK };
+    }
+    return {
+      status: statusCodes.INTERNAL_SERVER_ERROR,
+      message: 'Something went wrong, try again',
+    };
   }
 
   private async generateTokens(user: User): Promise<{

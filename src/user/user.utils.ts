@@ -1,4 +1,6 @@
 import { SellerAccountEmailBodyOptionsDto } from '@/mail/mail.dtos';
+import { ADMIN_ROLE_NAME } from '@/role/role.constants';
+import { User } from './entities/user.entity';
 
 export const prepareAccountApprovalEmailBody = (
   data: SellerAccountEmailBodyOptionsDto,
@@ -214,4 +216,13 @@ export const prepareAccountApprovedMessageBody = (
     https://awesomity.rw/
   `;
   return { html, text };
+};
+
+export const isUserAdmin = (user: User): boolean => {
+  return user.roles.some((currRole) => {
+    if (typeof currRole === 'string') {
+      return currRole === ADMIN_ROLE_NAME;
+    }
+    return currRole.name === ADMIN_ROLE_NAME;
+  });
 };
