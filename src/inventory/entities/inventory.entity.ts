@@ -43,7 +43,7 @@ export class Inventory {
   @Expose()
   updatedBy: User;
 
-  @ManyToOne(() => Product, (product) => product.invetories)
+  @ManyToOne(() => Product, (product) => product.inventories)
   product: Product;
 
   @BeforeInsert()
