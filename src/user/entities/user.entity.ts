@@ -1,5 +1,6 @@
 import { Category } from '@/category/entities/category.entity';
 import { Inventory } from '@/inventory/entities/inventory.entity';
+import { Order } from '@/order/entities/order.entity';
 import { Product } from '@/product/entities/product.entity';
 import { Role } from '@/role/entities/role.entity';
 import * as bcrypt from 'bcryptjs';
@@ -81,6 +82,10 @@ export class User {
   @OneToMany(() => Inventory, (inventory) => inventory.owner)
   @Expose()
   inventories: Inventory[];
+
+  @OneToMany(() => Order, (order) => order.buyer)
+  @Expose()
+  orders: Order[];
 
   @BeforeInsert()
   generateUniqId() {
