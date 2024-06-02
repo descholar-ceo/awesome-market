@@ -16,6 +16,7 @@ import { RoleModule } from './role/role.module';
 import { UserModule } from './user/user.module';
 import { MailModule } from './mail/mail.module';
 import { CategoryModule } from './category/category.module';
+import { InvetoryModule } from './invetory/invetory.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { CategoryModule } from './category/category.module';
     InitModule,
     MailModule,
     CategoryModule,
+    InvetoryModule,
   ],
   controllers: [AppController],
   providers: [AppService, InitialAdminProvider],
