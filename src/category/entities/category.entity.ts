@@ -1,3 +1,4 @@
+import { Product } from '@/product/entities/product.entity';
 import { User } from '@/user/entities/user.entity';
 import { Expose } from 'class-transformer';
 import {
@@ -6,6 +7,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryColumn,
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
@@ -41,6 +43,10 @@ export class Category {
   @JoinColumn({ name: 'updated_by' })
   @Expose()
   updatedBy: User;
+
+  @OneToMany(() => Product, (product) => product.category)
+  @Expose()
+  products: Product[];
 
   @BeforeInsert()
   generateUniqIds() {
