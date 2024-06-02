@@ -1,7 +1,9 @@
 import { CategoryService } from '@/category/category.service';
+import { CommonResponseDto } from '@/common/common.dtos';
 import { getDateInterval } from '@/common/utils/dates.utils';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
 import { User } from '@/user/entities/user.entity';
+import { isUserAdmin } from '@/user/user.utils';
 import {
   ForbiddenException,
   Injectable,
@@ -9,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { DeleteResult, Repository, SelectQueryBuilder } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateProductDto } from './dto/create-product.dto';
 import {
   FindProductFiltersDto,
@@ -18,8 +20,6 @@ import {
 } from './dto/find-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
-import { isUserAdmin } from '@/user/user.utils';
-import { CommonResponseDto } from '@/common/common.dtos';
 
 @Injectable()
 export class ProductService {
@@ -193,16 +193,14 @@ export class ProductService {
         'You cannot delete a product that you did not create',
       );
     }
-
-    const deleteResult: DeleteResult = await this.productRepository.delete(id);
-    if (!deleteResult.affected) {
-      return {
-        status: statusCodes.INTERNAL_SERVER_ERROR,
-        message: 'Something went wrong, try again',
-      };
+    const { affected } = await this.productRepository.delete(id);
+    if (!!affected) {
+      return { status: statusCodes.OK, message: statusNames.OK };
     }
-
-    return { status: statusCodes.OK, message: statusNames.OK };
+    return {
+      status: statusCodes.INTERNAL_SERVER_ERROR,
+      message: 'Something went wrong, try again',
+    };
   }
 
   private buildFindProductsQuery(
