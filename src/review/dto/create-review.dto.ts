@@ -4,6 +4,7 @@ import {
   IsPositive,
   IsString,
   IsUUID,
+  Max,
 } from 'class-validator';
 
 export class CreateReviewDto {
@@ -13,6 +14,7 @@ export class CreateReviewDto {
   @IsNotEmpty()
   @IsNumber()
   @IsPositive()
+  @Max(5)
   rating: number;
   @IsNotEmpty()
   @IsString()
