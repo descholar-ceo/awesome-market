@@ -1,6 +1,5 @@
 import { prepareUniqueCode } from '@/common/utils/strings.utils';
-import { Order } from '@/order/entities/order.entity';
-import { Product } from '@/product/entities/product.entity';
+import { Inventory } from '@/inventory/entities/inventory.entity';
 import { User } from '@/user/entities/user.entity';
 import { Expose } from 'class-transformer';
 import {
@@ -9,13 +8,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToMany,
   PrimaryColumn,
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
+import { orderStatuses } from '../order.constants';
 
 @Entity()
-export class Inventory {
+export class Order {
   @PrimaryColumn()
   @Expose()
   id: string;
@@ -36,28 +35,28 @@ export class Inventory {
   @Expose()
   code: string;
 
-  @ManyToOne(() => User, (user) => user.inventories)
+  @ManyToOne(() => User, (user) => user.orders)
+  @JoinColumn({ name: 'buyer_id' })
   @Expose()
-  owner: User;
+  buyer: User;
+
+  @Column({ enum: orderStatuses })
+  status: orderStatuses;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'updated_by' })
   @Expose()
   updatedBy: User;
 
-  @ManyToOne(() => Product, (product) => product.inventories)
+  @ManyToOne(() => Inventory, (inventory) => inventory.orders)
   @Expose()
-  product: Product;
-
-  @OneToMany(() => Order, (order) => order.buyer)
-  @Expose()
-  orders: Order[];
+  inventory: Inventory;
 
   @BeforeInsert()
   generateUniqIds() {
     this.id = uuidV4();
-    this.code = prepareUniqueCode(this.owner.firstName, {
-      name: this.product.name,
+    this.code = prepareUniqueCode(this.buyer.firstName, {
+      name: this.inventory.product.name,
     });
   }
 }
