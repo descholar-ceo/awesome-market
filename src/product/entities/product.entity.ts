@@ -63,6 +63,7 @@ export class Product {
   updatedBy: User;
 
   @OneToMany(() => Inventory, (inventory) => inventory.product)
+  @Expose()
   inventories: Inventory[];
 
   @BeforeInsert()

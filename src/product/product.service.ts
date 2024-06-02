@@ -105,6 +105,7 @@ export class ProductService {
       .leftJoinAndSelect('product.createdBy', 'createdBy')
       .leftJoinAndSelect('product.updatedBy', 'updatedBy')
       .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.inventories', 'inventories')
       .skip((page - 1) * limit)
       .take(limit)
       .getMany();
@@ -131,7 +132,7 @@ export class ProductService {
   async findById(id: string): Promise<ProductResponseDto> {
     const product = await this.productRepository.findOne({
       where: { id },
-      relations: ['createdBy', 'updatedBy', 'category'],
+      relations: ['createdBy', 'updatedBy', 'category', 'inventories'],
     });
 
     if (!product) {

@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateInvetories1717320883884 implements MigrationInterface {
+export class CreateInventories1717320883884 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "invetories" (
+      CREATE TABLE "inventories" (
         "id" uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
         "quantity" integer NOT NULL,
         "code" character varying NOT NULL UNIQUE,
@@ -14,35 +14,35 @@ export class CreateInvetories1717320883884 implements MigrationInterface {
         "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
       
-      CREATE TRIGGER update_invetories_updated_at_trigger
-      BEFORE UPDATE ON "invetories"
+      CREATE TRIGGER update_inventories_updated_at_trigger
+      BEFORE UPDATE ON "inventories"
       FOR EACH ROW EXECUTE FUNCTION update_updated_at_column_function();
 
-      ALTER TABLE "invetories"
+      ALTER TABLE "inventories"
       ADD CONSTRAINT "FK_product_id" FOREIGN KEY ("product_id") REFERENCES "products"("id");
 
-      ALTER TABLE "invetories"
+      ALTER TABLE "inventories"
       ADD CONSTRAINT "FK_owner_id" FOREIGN KEY ("owner_id") REFERENCES "users"("id");
 
-      ALTER TABLE "invetories"
+      ALTER TABLE "inventories"
       ADD CONSTRAINT "FK_updated_by" FOREIGN KEY ("updated_by") REFERENCES "users"("id");
     `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      ALTER TABLE "invetories"
+      ALTER TABLE "inventories"
       DROP CONSTRAINT "FK_updated_by",
 
-      ALTER TABLE "invetories"
+      ALTER TABLE "inventories"
       DROP CONSTRAINT "FK_owner_id";
       
-      ALTER TABLE "invetories"
+      ALTER TABLE "inventories"
       DROP CONSTRAINT "FK_product_id";
 
-      DROP TRIGGER IF EXISTS update_invetories_updated_at_trigger ON "invetories";
+      DROP TRIGGER IF EXISTS update_inventories_updated_at_trigger ON "inventories";
 
-      DROP TABLE IF EXISTS "invetories";
+      DROP TABLE IF EXISTS "inventories";
     `);
   }
 }

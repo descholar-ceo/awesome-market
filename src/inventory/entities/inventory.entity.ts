@@ -34,11 +34,11 @@ export class Inventory {
   @Expose()
   code: string;
 
-  @ManyToOne(() => User, (user) => user.createdProducts)
+  @ManyToOne(() => User, (user) => user.inventories)
   @Expose()
   owner: User;
 
-  @ManyToOne(() => User, (user) => user.updatedProducts)
+  @ManyToOne(() => User)
   @JoinColumn({ name: 'updated_by' })
   @Expose()
   updatedBy: User;
@@ -49,6 +49,8 @@ export class Inventory {
   @BeforeInsert()
   generateUniqIds() {
     this.id = uuidV4();
+    console.log('===>this.owner: ', this.owner);
+    console.log('===>this.product: ', this.product);
     this.code = prepareUniqueCode(this.owner.firstName, {
       name: this.product.name,
     });

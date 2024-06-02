@@ -29,6 +29,7 @@ import {
   prepareAccountPendingNotifyBody,
 } from './user.utils';
 import { CommonResponseDto } from '@/common/common.dtos';
+import { UserResponseDto } from './dto/find-product.dto';
 
 @Injectable()
 export class UserService {
@@ -223,6 +224,23 @@ export class UserService {
     return {
       status: statusCodes.INTERNAL_SERVER_ERROR,
       message: statusNames.INTERNAL_SERVER_ERROR,
+    };
+  }
+
+  async findById(id: string): Promise<UserResponseDto> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['inventories', 'createdProducts'],
+    });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return {
+      status: statusCodes.OK,
+      message: statusNames.OK,
+      data: plainToInstance(User, user, {
+        excludeExtraneousValues: true,
+      }),
     };
   }
 
