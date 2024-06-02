@@ -44,13 +44,12 @@ export class Inventory {
   updatedBy: User;
 
   @ManyToOne(() => Product, (product) => product.inventories)
+  @Expose()
   product: Product;
 
   @BeforeInsert()
   generateUniqIds() {
     this.id = uuidV4();
-    console.log('===>this.owner: ', this.owner);
-    console.log('===>this.product: ', this.product);
     this.code = prepareUniqueCode(this.owner.firstName, {
       name: this.product.name,
     });

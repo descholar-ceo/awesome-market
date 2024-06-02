@@ -30,7 +30,10 @@ export class InventoryController {
     @Body() createInventoryDto: CreateInventoryDto,
     @CurrentUser() currUser: User,
   ): Promise<InventoryResponseDto> {
-    return await this.inventoryService.create(createInventoryDto, currUser);
+    return await this.inventoryService.createOrIncrease(
+      createInventoryDto,
+      currUser,
+    );
   }
 
   @Get()
@@ -43,12 +46,17 @@ export class InventoryController {
     return this.inventoryService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(
+  @Patch('/increase-inventory/:id')
+  increaseInventory(
     @Param('id') id: string,
     @Body() updateInventoryDto: UpdateInventoryDto,
+    @CurrentUser() currUser: User,
   ) {
-    return this.inventoryService.update(+id, updateInventoryDto);
+    return this.inventoryService.increaseInventory(
+      id,
+      updateInventoryDto,
+      currUser,
+    );
   }
 
   @Delete(':id')
