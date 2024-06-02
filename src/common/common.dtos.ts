@@ -5,7 +5,7 @@ export class CommonResponseDto {
 }
 
 export class PaginationDto {
-  pages: number;
+  totalPages: number;
   recordsPerPage: number;
   totalRecords: number;
   currentPage: number;

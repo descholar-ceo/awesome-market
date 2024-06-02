@@ -1,15 +1,5 @@
 import { PaginationDto } from '@/common/common.dtos';
-import {
-  IsDateString,
-  IsIn,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsPositive,
-  IsString,
-  IsUUID,
-  Min,
-} from 'class-validator';
+import { IsDateString, IsIn, IsOptional, IsUUID } from 'class-validator';
 import { Category } from '../entities/category.entity';
 
 export class FindCategoryFiltersDto {
@@ -27,14 +17,8 @@ export class FindCategoryFiltersDto {
   @IsUUID()
   createdBy?: string;
   @IsOptional()
-  @IsInt()
-  @IsPositive()
-  @Min(1)
   pageNumber?: number = 1;
   @IsOptional()
-  @IsInt()
-  @IsPositive()
-  @Min(1)
   recordsPerPage?: number = 10;
   @IsOptional()
   @IsIn(['name', 'createdAt', 'id', 'updatedAt'])
