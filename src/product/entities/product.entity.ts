@@ -1,6 +1,6 @@
 import { Category } from '@/category/entities/category.entity';
 import { prepareUniqueCode } from '@/common/utils/strings.utils';
-import { Invetory } from '@/invetory/entities/invetory.entity';
+import { Inventory } from '@/inventory/entities/inventory.entity';
 import { User } from '@/user/entities/user.entity';
 import { Expose } from 'class-transformer';
 import {
@@ -62,8 +62,8 @@ export class Product {
   @Expose()
   updatedBy: User;
 
-  @OneToMany(() => Invetory, (invetory) => invetory.product)
-  invetories: Invetory[];
+  @OneToMany(() => Inventory, (inventory) => inventory.product)
+  invetories: Inventory[];
 
   @BeforeInsert()
   generateUniqIds() {
