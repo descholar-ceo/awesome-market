@@ -2,10 +2,14 @@ import { CategoryService } from '@/category/category.service';
 import { getDateInterval } from '@/common/utils/dates.utils';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
 import { User } from '@/user/entities/user.entity';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { DeleteResult, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateProductDto } from './dto/create-product.dto';
 import {
   FindProductFiltersDto,
@@ -14,6 +18,8 @@ import {
 } from './dto/find-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
+import { isUserAdmin } from '@/user/user.utils';
+import { CommonResponseDto } from '@/common/common.dtos';
 
 @Injectable()
 export class ProductService {
@@ -122,22 +128,83 @@ export class ProductService {
     };
   }
 
-  async findOne(id: string) {
-    return await this.productRepository.findBy({ id });
-  }
+  async findById(id: string): Promise<ProductResponseDto> {
+    const product = await this.productRepository.findOne({
+      where: { id },
+      relations: ['createdBy', 'updatedBy', 'category'],
+    });
 
-  async update(id: string, updateProductData: UpdateProductDto) {
-    const product = await this.productRepository.findBy({ id });
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
-    Object.assign(product, updateProductData);
-    return await this.productRepository.save(product);
+
+    return {
+      status: statusCodes.OK,
+      message: statusNames.OK,
+      data: plainToInstance(Product, product, {
+        excludeExtraneousValues: true,
+      }),
+    };
   }
 
-  async remove(id: string) {
-    await this.productRepository.delete(id);
+  async update(
+    id: string,
+    updateProductData: UpdateProductDto,
+    currUser: User,
+  ): Promise<ProductResponseDto> {
+    const product = (await this.findById(id))?.data;
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+
+    if (!isUserAdmin(currUser) && product.createdBy.id !== currUser.id) {
+      throw new ForbiddenException(
+        'You cannot update a product that you did not create',
+      );
+    }
+    let affectedRows: number;
+    const { categoryId, ...updatedData } = updateProductData;
+    if (!!updateProductData.categoryId) {
+      const category = (await this.categoryService.findById(categoryId))?.data;
+      if (!category) throw new NotFoundException('Category not found');
+      product.category = category;
+      affectedRows = 1;
+    }
+    Object.assign(product, { ...updatedData });
+    product.updatedBy = currUser;
+    const { affected } = await this.productRepository.update(id, product);
+    if (!!affected || !!affectedRows) {
+      return await this.findById(id);
+    }
+    return {
+      status: statusCodes.INTERNAL_SERVER_ERROR,
+      message: 'Nothing updated',
+    };
   }
+
+  async remove(id: string, currUser: User): Promise<CommonResponseDto> {
+    const product = await this.findById(id);
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+
+    if (!isUserAdmin(currUser) && product.data.createdBy.id !== currUser.id) {
+      throw new ForbiddenException(
+        'You cannot delete a product that you did not create',
+      );
+    }
+
+    const deleteResult: DeleteResult = await this.productRepository.delete(id);
+    if (!deleteResult.affected) {
+      return {
+        status: statusCodes.INTERNAL_SERVER_ERROR,
+        message: 'Something went wrong, try again',
+      };
+    }
+
+    return { status: statusCodes.OK, message: statusNames.OK };
+  }
+
   private buildFindProductsQuery(
     name?: string,
     description?: string,

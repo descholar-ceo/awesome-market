@@ -134,25 +134,23 @@ export class CategoryService {
     updateCategoryData: UpdateCategoryDto,
     currUser: User,
   ): Promise<CategoryResponseDto> {
-    const category = await this.findById(id);
+    const category = (await this.findById(id))?.data;
     if (!category) {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
 
-    if (!isUserAdmin(currUser) && category.data.createdBy.id !== currUser.id) {
+    if (!isUserAdmin(currUser) && category.createdBy.id !== currUser.id) {
       throw new ForbiddenException(
         'You cannot update a category that you did not create',
       );
     }
+    category.updatedBy = currUser;
+    Object.assign(category, updateCategoryData);
+    const { affected } = await this.categoryRepository.update(id, category);
 
-    Object.assign(category.data, updateCategoryData);
-    const updatedCategory = await this.categoryRepository.save(category.data);
-
-    return {
-      status: statusCodes.OK,
-      message: statusNames.OK,
-      data: updatedCategory,
-    };
+    if (!!affected) {
+      return await this.findById(id);
+    }
   }
 
   async remove(id: string, currUser: User): Promise<CommonResponseDto> {

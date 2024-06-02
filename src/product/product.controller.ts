@@ -1,11 +1,12 @@
+import { CommonResponseDto } from '@/common/common.dtos';
+import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
 import { Roles } from '@/decorators/roles/roles.decorator';
 import { AuthGuard } from '@/guards/auth/auth.guard';
 import { RolesGuard } from '@/guards/roles/roles.guard';
-import {
-  ADMIN_ROLE_NAME,
-  BUYER_ROLE_NAME,
-  SELLER_ROLE_NAME,
-} from '@/role/role.constants';
+import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
+import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
+import { ADMIN_ROLE_NAME, SELLER_ROLE_NAME } from '@/role/role.constants';
+import { User } from '@/user/entities/user.entity';
 import {
   Body,
   Controller,
@@ -16,16 +17,15 @@ import {
   Post,
   Query,
   UseGuards,
+  UsePipes,
 } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
-import { ProductService } from './product.service';
-import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
-import { User } from '@/user/entities/user.entity';
 import {
   FindProductFiltersDto,
   ProductsResponseDto,
 } from './dto/find-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+import { ProductService } from './product.service';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('products')
@@ -41,7 +41,6 @@ export class ProductController {
     return await this.productService.create(createProductData, currUser);
   }
 
-  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME, BUYER_ROLE_NAME])
   @Get()
   async findWithFilters(
     @Query() filters: FindProductFiltersDto,
@@ -50,17 +49,29 @@ export class ProductController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productService.findOne(id);
+  @UsePipes(new ValidateUuidPipe())
+  findById(@Param('id') id: string) {
+    return this.productService.findById(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productService.update(id, updateProductDto);
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
+  @UsePipes(new ValidateIdFromParam())
+  update(
+    @Param('id') id: string,
+    @Body() updateCategoryDto: UpdateProductDto,
+    @CurrentUser() currUser: User,
+  ) {
+    return this.productService.update(id, updateCategoryDto, currUser);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productService.remove(id);
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
+  @UsePipes(new ValidateIdFromParam())
+  async remove(
+    @Param('id') id: string,
+    @CurrentUser() currUser: User,
+  ): Promise<CommonResponseDto> {
+    return this.productService.remove(id, currUser);
   }
 }
