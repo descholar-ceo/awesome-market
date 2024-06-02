@@ -17,6 +17,7 @@ import { UserModule } from './user/user.module';
 import { MailModule } from './mail/mail.module';
 import { CategoryModule } from './category/category.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { InventoryModule } from './inventory/inventory.module';
     MailModule,
     CategoryModule,
     InventoryModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [AppService, InitialAdminProvider],
