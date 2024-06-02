@@ -13,7 +13,6 @@ export class CreateOrders1717345093714 implements MigrationInterface {
 
         CREATE TABLE "orders" (
         "id" uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-        "quantity" integer NOT NULL,
         "code" character varying NOT NULL UNIQUE,
         "buyer_id" uuid NOT NULL,
         "inventory_id" uuid NOT NULL,
