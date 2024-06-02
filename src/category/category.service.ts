@@ -80,15 +80,18 @@ export class CategoryService {
         message: 'No records found',
       };
     }
-
+    const page =
+      isNaN(pageNumber) || Number(pageNumber) < 1 ? 1 : Number(pageNumber);
+    const limit =
+      isNaN(recordsPerPage) || recordsPerPage < 1 ? 10 : Number(recordsPerPage);
     const categories = await findCategoriesQuery
       .leftJoinAndSelect('category.createdBy', 'createdBy')
       .leftJoinAndSelect('category.updatedBy', 'updatedBy')
-      .skip((pageNumber - 1) * recordsPerPage)
-      .take(recordsPerPage)
+      .skip((page - 1) * limit)
+      .take(limit)
       .getMany();
 
-    const pages = Math.ceil(totalRecords / recordsPerPage);
+    const totalPages = Math.ceil(totalRecords / limit);
 
     return {
       status: statusCodes.OK,
@@ -98,10 +101,10 @@ export class CategoryService {
           excludeExtraneousValues: true,
         }),
         pagination: {
-          pages,
+          totalPages,
           totalRecords,
-          currentPage: pageNumber ?? 1,
-          recordsPerPage: recordsPerPage ?? 10,
+          currentPage: page ?? 1,
+          recordsPerPage: limit ?? 10,
         },
       },
     };
