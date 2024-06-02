@@ -1,4 +1,5 @@
 import { Category } from '@/category/entities/category.entity';
+import { Product } from '@/product/entities/product.entity';
 import { Role } from '@/role/entities/role.entity';
 import * as bcrypt from 'bcryptjs';
 import { Exclude, Expose } from 'class-transformer';
@@ -67,6 +68,14 @@ export class User {
   @OneToMany(() => Category, (category) => category.updatedBy)
   @Expose()
   updatedCategories: Category[];
+
+  @OneToMany(() => Product, (product) => product.createdBy)
+  @Expose()
+  createdProducts: Product[];
+
+  @OneToMany(() => Product, (product) => product.updatedBy)
+  @Expose()
+  updatedProducts: Product[];
 
   @BeforeInsert()
   generateUniqId() {
