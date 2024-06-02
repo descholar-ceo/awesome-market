@@ -4,12 +4,14 @@ import { Expose } from 'class-transformer';
 import {
   BeforeInsert,
   Column,
+  Entity,
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
 
+@Entity()
 export class Review {
   @PrimaryColumn()
   @Expose()
