@@ -143,6 +143,8 @@ export class ProductService {
         'category',
         'inventories',
         'reviews',
+        'inventories.orders',
+        'inventories.orders.buyer',
       ],
     });
 
