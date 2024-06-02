@@ -10,6 +10,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Patch,
   Post,
@@ -20,6 +21,7 @@ import { CreateInventoryDto } from './dto/create-inventory.dto';
 import { InventoryResponseDto } from './dto/find-inventory.dto';
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
 import { InventoryService } from './inventory.service';
+import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('inventories')
@@ -76,5 +78,12 @@ export class InventoryController {
     @CurrentUser() currUser: User,
   ): Promise<CommonResponseDto> {
     return this.inventoryService.remove(id, currUser);
+  }
+
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
+  @Get(':id')
+  @UsePipes(new ValidateUuidPipe())
+  findById(@Param('id') id: string) {
+    return this.inventoryService.findById(id);
   }
 }
