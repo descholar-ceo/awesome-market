@@ -49,7 +49,7 @@ export class Inventory {
   @Expose()
   product: Product;
 
-  @OneToMany(() => Order, (order) => order.buyer)
+  @OneToMany(() => Order, (order) => order.inventory)
   @Expose()
   orders: Order[];
 

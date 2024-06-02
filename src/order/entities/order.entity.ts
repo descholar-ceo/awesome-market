@@ -41,6 +41,7 @@ export class Order {
   buyer: User;
 
   @Column({ enum: orderStatuses })
+  @Expose()
   status: orderStatuses;
 
   @ManyToOne(() => User)

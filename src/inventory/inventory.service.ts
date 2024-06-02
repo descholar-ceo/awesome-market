@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import { CreateInventoryDto } from './dto/create-inventory.dto';
 import { InventoryResponseDto } from './dto/find-inventory.dto';
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
@@ -109,22 +109,28 @@ export class InventoryService {
     id: string,
     updateInventoryData: UpdateInventoryDto,
     currUser: User,
+    queryRunner?: QueryRunner,
   ): Promise<InventoryResponseDto> {
     const inventory = (await this.findById(id))?.data;
     if (!inventory) {
       throw new NotFoundException(`Inventory with ID ${id} not found`);
     }
-
     let affectedRows: number;
     inventory.updatedBy = currUser;
     if (inventory.quantity < updateInventoryData.quantity) {
       throw new BadRequestException('Not enough inventory');
-    } else {
-      inventory.quantity -= updateInventoryData.quantity;
     }
-    const { affected } = await this.inventoryRepository.update(id, inventory);
-    if (!!affected || !!affectedRows) {
+    Object.assign(inventory, {
+      quantity: inventory.quantity - updateInventoryData.quantity,
+    });
+    if (!!queryRunner) {
+      await queryRunner.manager.save(inventory);
       return await this.findById(id);
+    } else {
+      const { affected } = await this.inventoryRepository.update(id, inventory);
+      if (!!affected || !!affectedRows) {
+        return await this.findById(id);
+      }
     }
     return {
       status: statusCodes.INTERNAL_SERVER_ERROR,
