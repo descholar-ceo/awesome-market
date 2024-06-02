@@ -1,5 +1,5 @@
-import { isUserAdmin } from './../user/user.utils';
-import { prepareDateInterval } from '@/common/utils/dates.utils';
+import { CommonResponseDto } from '@/common/common.dtos';
+import { getDateInterval } from '@/common/utils/dates.utils';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
 import { ConfigService } from '@/config/config.service';
 import { User } from '@/user/entities/user.entity';
@@ -9,7 +9,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
 import { DeleteResult, Repository, SelectQueryBuilder } from 'typeorm';
+import { isUserAdmin } from './../user/user.utils';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import {
   CategoriesResponseDto,
@@ -18,8 +20,6 @@ import {
 } from './dto/find-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
-import { plainToInstance } from 'class-transformer';
-import { CommonResponseDto } from '@/common/common.dtos';
 
 @Injectable()
 export class CategoryService {
@@ -59,7 +59,7 @@ export class CategoryService {
       sortBy,
       sortOrder,
     } = filters;
-    const { startDate, endDate } = this.getDateInterval(
+    const { startDate, endDate } = getDateInterval(
       createdFromDate,
       createdToDate,
     );
@@ -176,19 +176,6 @@ export class CategoryService {
     }
 
     return { status: statusCodes.OK, message: statusNames.OK };
-  }
-
-  private getDateInterval(createdFromDate?: Date, createdToDate?: Date) {
-    if (!createdFromDate && !createdToDate) {
-      return { startDate: undefined, endDate: undefined };
-    }
-
-    const { startOfTheDay, endOfTheDay } = prepareDateInterval(
-      createdFromDate ? new Date(createdFromDate) : null,
-      createdToDate ? new Date(createdToDate) : null,
-    );
-
-    return { startDate: startOfTheDay, endDate: endOfTheDay };
   }
 
   private buildFindCategoriesQuery(

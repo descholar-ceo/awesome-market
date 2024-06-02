@@ -45,3 +45,16 @@ export const getCurrTimeDataToString = (): {
 
   return { currYear, currMonth, currDate, currTimeStamp };
 };
+
+export const getDateInterval = (beginingDate?: Date, endingDate?: Date) => {
+  if (!beginingDate && !endingDate) {
+    return { startDate: undefined, endDate: undefined };
+  }
+
+  const { startOfTheDay, endOfTheDay } = prepareDateInterval(
+    beginingDate ? new Date(beginingDate) : null,
+    endingDate ? new Date(endingDate) : null,
+  );
+
+  return { startDate: startOfTheDay, endDate: endOfTheDay };
+};
