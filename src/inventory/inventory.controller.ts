@@ -38,6 +38,7 @@ export class InventoryController {
     );
   }
 
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Patch('/increase-inventory/:id')
   @UsePipes(new ValidateIdFromParam())
   increaseInventory(
@@ -52,6 +53,7 @@ export class InventoryController {
     );
   }
 
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Patch('/decrease-inventory/:id')
   @UsePipes(new ValidateIdFromParam())
   decreaseInventory(
@@ -66,6 +68,7 @@ export class InventoryController {
     );
   }
 
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Delete(':id')
   @UsePipes(new ValidateIdFromParam())
   async remove(
