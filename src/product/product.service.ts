@@ -107,6 +107,8 @@ export class ProductService {
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.inventories', 'inventories')
       .leftJoinAndSelect('inventories.owner', 'inventoryOwner')
+      .leftJoinAndSelect('inventories.orders', 'orders')
+      .leftJoinAndSelect('orders.buyer', 'buyer')
       .leftJoinAndSelect('product.reviews', 'reviews')
       .leftJoinAndSelect('reviews.ratedBy', 'ratedBy')
       .skip((page - 1) * limit)

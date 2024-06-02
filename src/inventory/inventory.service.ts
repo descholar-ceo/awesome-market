@@ -62,7 +62,7 @@ export class InventoryService {
   async findById(id: string): Promise<InventoryResponseDto> {
     const inventory = await this.inventoryRepository.findOne({
       where: { id },
-      relations: ['owner', 'updatedBy', 'product'],
+      relations: ['owner', 'updatedBy', 'product', 'orders'],
     });
     if (!inventory) {
       throw new NotFoundException(`Inventory with ID ${id} not found`);
@@ -115,15 +115,10 @@ export class InventoryService {
       throw new NotFoundException(`Inventory with ID ${id} not found`);
     }
 
-    if (!isUserAdmin(currUser) && inventory.owner.id !== currUser.id) {
-      throw new ForbiddenException(
-        'You cannot add items to an inventory that you do not own',
-      );
-    }
     let affectedRows: number;
     inventory.updatedBy = currUser;
     if (inventory.quantity < updateInventoryData.quantity) {
-      throw new BadRequestException('Not enough inventory, increase it first');
+      throw new BadRequestException('Not enough inventory');
     } else {
       inventory.quantity -= updateInventoryData.quantity;
     }

@@ -1,15 +1,36 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
+import { User } from '@/user/entities/user.entity';
+import { AuthGuard } from '@/guards/auth/auth.guard';
+import { RolesGuard } from '@/guards/roles/roles.guard';
+import { Roles } from '@/decorators/roles/roles.decorator';
+import { BUYER_ROLE_NAME, ADMIN_ROLE_NAME } from '@/role/role.constants';
+import { OrderResponseDto } from './dto/find-order.dto';
 
-@Controller('order')
+@UseGuards(AuthGuard, RolesGuard)
+@Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
+  @Roles([ADMIN_ROLE_NAME, BUYER_ROLE_NAME])
   @Post()
-  create(@Body() createOrderDto: CreateOrderDto) {
-    return this.orderService.create(createOrderDto);
+  create(
+    @Body() createOrderDto: CreateOrderDto,
+    @CurrentUser() currUser: User,
+  ): Promise<OrderResponseDto> {
+    return this.orderService.create(createOrderDto, currUser);
   }
 
   @Get()
