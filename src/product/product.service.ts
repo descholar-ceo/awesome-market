@@ -106,6 +106,7 @@ export class ProductService {
       .leftJoinAndSelect('product.updatedBy', 'updatedBy')
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.inventories', 'inventories')
+      .leftJoinAndSelect('inventories.owner', 'inventoryOwner')
       .skip((page - 1) * limit)
       .take(limit)
       .getMany();
