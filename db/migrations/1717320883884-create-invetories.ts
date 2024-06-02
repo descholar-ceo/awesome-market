@@ -19,26 +19,26 @@ export class CreateInventories1717320883884 implements MigrationInterface {
       FOR EACH ROW EXECUTE FUNCTION update_updated_at_column_function();
 
       ALTER TABLE "inventories"
-      ADD CONSTRAINT "FK_product_id" FOREIGN KEY ("product_id") REFERENCES "products"("id");
+      ADD CONSTRAINT "FK_inventories_product_id" FOREIGN KEY ("product_id") REFERENCES "products"("id");
 
       ALTER TABLE "inventories"
-      ADD CONSTRAINT "FK_owner_id" FOREIGN KEY ("owner_id") REFERENCES "users"("id");
+      ADD CONSTRAINT "FK_inventories_owner_id" FOREIGN KEY ("owner_id") REFERENCES "users"("id");
 
       ALTER TABLE "inventories"
-      ADD CONSTRAINT "FK_updated_by" FOREIGN KEY ("updated_by") REFERENCES "users"("id");
+      ADD CONSTRAINT "FK_inventories_updated_by" FOREIGN KEY ("updated_by") REFERENCES "users"("id");
     `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       ALTER TABLE "inventories"
-      DROP CONSTRAINT "FK_updated_by",
+      DROP CONSTRAINT "FK_inventories_updated_by",
 
       ALTER TABLE "inventories"
-      DROP CONSTRAINT "FK_owner_id";
+      DROP CONSTRAINT "FK_inventories_owner_id";
       
       ALTER TABLE "inventories"
-      DROP CONSTRAINT "FK_product_id";
+      DROP CONSTRAINT "FK_inventories_product_id";
 
       DROP TRIGGER IF EXISTS update_inventories_updated_at_trigger ON "inventories";
 
