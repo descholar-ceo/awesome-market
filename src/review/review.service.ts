@@ -50,7 +50,7 @@ export class ReviewService {
   async findById(id: string): Promise<ReviewResponseDto> {
     const review = await this.reviewRepository.findOne({
       where: { id },
-      relations: ['owner', 'updatedBy', 'product'],
+      relations: ['ratedBy', 'updatedBy', 'product'],
     });
     if (!review) {
       throw new NotFoundException(`Review with ID ${id} not found`);
@@ -80,6 +80,7 @@ export class ReviewService {
         'You cannot update a review that you do not own',
       );
     }
+    console.log('===>updateReviewData: ', updateReviewData);
     review.updatedBy = currUser;
     review.ratedBy = currUser;
     Object.assign(review, updateReviewData);
