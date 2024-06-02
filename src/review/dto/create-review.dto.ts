@@ -1,7 +1,6 @@
 import {
   IsNotEmpty,
   IsNumber,
-  IsOptional,
   IsPositive,
   IsString,
   IsUUID,
@@ -15,7 +14,7 @@ export class CreateReviewDto {
   @IsNumber()
   @IsPositive()
   rating: number;
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
   comment: string;
 }
