@@ -1,7 +1,10 @@
+import { CommonResponseDto } from '@/common/common.dtos';
 import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
 import { Roles } from '@/decorators/roles/roles.decorator';
 import { AuthGuard } from '@/guards/auth/auth.guard';
 import { RolesGuard } from '@/guards/roles/roles.guard';
+import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
+import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
 import { ADMIN_ROLE_NAME, SELLER_ROLE_NAME } from '@/role/role.constants';
 import { User } from '@/user/entities/user.entity';
 import {
@@ -15,18 +18,14 @@ import {
   Query,
   UseGuards,
   UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
 import {
   CategoryResponseDto,
   FindCategoryFiltersDto,
 } from './dto/find-category.dto';
-import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
-import { CommonResponseDto } from '@/common/common.dtos';
-import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('categories')
@@ -43,8 +42,7 @@ export class CategoryController {
   }
 
   @Get()
-  @UsePipes(new ValidationPipe())
-  findWithFilters(@Query('filters') filters: FindCategoryFiltersDto) {
+  findWithFilters(@Query() filters: FindCategoryFiltersDto) {
     return this.categoryService.findWithFilters(filters);
   }
 

@@ -56,6 +56,8 @@ export class CategoryService {
       createdBy,
       pageNumber,
       recordsPerPage,
+      sortBy,
+      sortOrder,
     } = filters;
     const { startDate, endDate } = this.getDateInterval(
       createdFromDate,
@@ -67,6 +69,8 @@ export class CategoryService {
       createdBy,
       startDate,
       endDate,
+      sortBy,
+      sortOrder?.toUpperCase(),
     );
 
     const totalRecords = await findCategoriesQuery.getCount();
@@ -190,6 +194,8 @@ export class CategoryService {
     createdBy?: string,
     startDate?: Date,
     endDate?: Date,
+    sortBy?: string,
+    sortOrder?: any,
   ): SelectQueryBuilder<Category> {
     const query = this.categoryRepository.createQueryBuilder('category');
 
@@ -214,6 +220,11 @@ export class CategoryService {
     if (endDate) {
       query.andWhere('category.createdAt <= :endDate', { endDate });
     }
+
+    const sortColumn = sortBy || 'createdAt';
+    const sortOrderValue = sortOrder || 'DESC';
+
+    query.orderBy(`category.${sortColumn}`, sortOrderValue);
 
     return query;
   }
