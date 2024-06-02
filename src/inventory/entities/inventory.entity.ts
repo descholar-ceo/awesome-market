@@ -13,7 +13,7 @@ import {
 import { v4 as uuidV4 } from 'uuid';
 
 @Entity()
-export class Invetory {
+export class Inventory {
   @PrimaryColumn()
   @Expose()
   id: string;
