@@ -19,26 +19,26 @@ export class CreateReviews1717340639195 implements MigrationInterface {
             FOR EACH ROW EXECUTE FUNCTION update_updated_at_column_function();
 
             ALTER TABLE "reviews"
-            ADD CONSTRAINT "FK_product_id" FOREIGN KEY ("product_id") REFERENCES "products"("id");
+            ADD CONSTRAINT "FK_reviews_product_id" FOREIGN KEY ("product_id") REFERENCES "products"("id");
 
             ALTER TABLE "reviews"
-            ADD CONSTRAINT "FK_rated_by" FOREIGN KEY ("rated_by") REFERENCES "users"("id");
+            ADD CONSTRAINT "FK_reviews_rated_by" FOREIGN KEY ("rated_by") REFERENCES "users"("id");
 
             ALTER TABLE "reviews"
-            ADD CONSTRAINT "FK_updated_by" FOREIGN KEY ("updated_by") REFERENCES "users"("id");
+            ADD CONSTRAINT "FK_reviews_updated_by" FOREIGN KEY ("updated_by") REFERENCES "users"("id");
         `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       ALTER TABLE "reviews"
-      DROP CONSTRAINT "FK_updated_by",
+      DROP CONSTRAINT "FK_reviews_updated_by",
 
       ALTER TABLE "reviews"
-      DROP CONSTRAINT "FK_rated_by";
+      DROP CONSTRAINT "FK_reviews_rated_by";
       
       ALTER TABLE "reviews"
-      DROP CONSTRAINT "FK_product_id";
+      DROP CONSTRAINT "FK_reviews_product_id";
 
       DROP TRIGGER IF EXISTS update_reviews_updated_at_trigger ON "reviews";
 
