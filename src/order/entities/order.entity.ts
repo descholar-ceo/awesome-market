@@ -21,10 +21,6 @@ export class Order {
 
   @Column()
   @Expose()
-  quantity: number;
-
-  @Column()
-  @Expose()
   createdAt: Date;
 
   @Column()
