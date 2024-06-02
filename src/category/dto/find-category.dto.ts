@@ -1,9 +1,12 @@
 import { PaginationDto } from '@/common/common.dtos';
 import {
   IsDateString,
+  IsIn,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsPositive,
+  IsString,
   IsUUID,
   Min,
 } from 'class-validator';
@@ -33,6 +36,12 @@ export class FindCategoryFiltersDto {
   @IsPositive()
   @Min(1)
   recordsPerPage?: number = 10;
+  @IsOptional()
+  @IsIn(['name', 'createdAt', 'id', 'updatedAt'])
+  sortBy?: string;
+  @IsOptional()
+  @IsIn(['asc', 'desc', 'ASC', 'DESC'])
+  sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc';
 }
 export class CategoriesDataDto {
   categories: Category[];
