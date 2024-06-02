@@ -26,3 +26,22 @@ export const prepareDateInterval = (
 
   return { startOfTheDay, endOfTheDay };
 };
+
+export const getCurrTimeDataToString = (): {
+  currYear: string;
+  currMonth: string;
+  currDate: string;
+  currTimeStamp: string;
+} => {
+  const currDateTime = new Date();
+  const currYear = currDateTime.getFullYear().toString();
+
+  const formatWithLeadingZero = (num: number): string =>
+    num < 10 ? `0${num}` : num.toString();
+
+  const currMonth = formatWithLeadingZero(currDateTime.getMonth() + 1);
+  const currDate = formatWithLeadingZero(currDateTime.getDate());
+  const currTimeStamp = currDateTime.getTime().toString();
+
+  return { currYear, currMonth, currDate, currTimeStamp };
+};
