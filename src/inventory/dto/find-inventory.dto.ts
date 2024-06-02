@@ -6,13 +6,9 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { Product } from '../entities/product.entity';
+import { Inventory } from '../entities/inventory.entity';
 
-export class FindProductFiltersDto {
-  @IsOptional()
-  name?: string;
-  @IsOptional()
-  description?: string;
+export class FindInventoryFiltersDto {
   @IsOptional()
   @IsDateString()
   createdFromDate?: Date;
@@ -21,10 +17,10 @@ export class FindProductFiltersDto {
   createdToDate?: Date;
   @IsOptional()
   @IsUUID()
-  createdBy?: string;
+  ownerId?: string;
   @IsOptional()
   @IsUUID()
-  categoryId?: string;
+  productId?: string;
   @IsOptional()
   @IsString()
   code?: string;
@@ -33,27 +29,27 @@ export class FindProductFiltersDto {
   @IsOptional()
   recordsPerPage?: number = 10;
   @IsOptional()
-  minUnitPrice?: number;
+  minQuantity?: number;
   @IsOptional()
-  maxUnitPrice?: number;
+  maxQuantity?: number;
   @IsOptional()
-  @IsIn(['name', 'createdAt', 'id', 'updatedAt', 'unitPrice'])
+  @IsIn(['quantity', 'createdAt', 'id', 'updatedAt'])
   sortBy?: string;
   @IsOptional()
   @IsIn(['asc', 'desc', 'ASC', 'DESC'])
   sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc';
 }
-export class ProductsDataDto {
-  products: Product[];
+export class InventoriesDataDto {
+  inventories: Inventory[];
   pagination: PaginationDto;
 }
-export class ProductsResponseDto {
+export class InventoriesResponseDto {
   status: number;
   message: string;
-  data?: ProductsDataDto;
+  data?: InventoriesDataDto;
 }
-export class ProductResponseDto {
+export class InventoryResponseDto {
   status: number;
   message: string;
-  data?: Product;
+  data?: Inventory;
 }

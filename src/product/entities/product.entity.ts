@@ -63,7 +63,7 @@ export class Product {
   updatedBy: User;
 
   @OneToMany(() => Inventory, (inventory) => inventory.product)
-  invetories: Inventory[];
+  inventories: Inventory[];
 
   @BeforeInsert()
   generateUniqIds() {
