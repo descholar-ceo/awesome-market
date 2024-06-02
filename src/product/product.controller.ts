@@ -14,6 +14,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -21,6 +22,10 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductService } from './product.service';
 import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
 import { User } from '@/user/entities/user.entity';
+import {
+  FindProductFiltersDto,
+  ProductsResponseDto,
+} from './dto/find-product.dto';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('products')
@@ -38,8 +43,10 @@ export class ProductController {
 
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME, BUYER_ROLE_NAME])
   @Get()
-  findAll() {
-    return this.productService.findAll();
+  async findWithFilters(
+    @Query() filters: FindProductFiltersDto,
+  ): Promise<ProductsResponseDto> {
+    return await this.productService.findWithFilters(filters);
   }
 
   @Get(':id')

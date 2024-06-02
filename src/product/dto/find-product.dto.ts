@@ -1,5 +1,11 @@
 import { PaginationDto } from '@/common/common.dtos';
-import { IsDateString, IsIn, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsDateString,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { Product } from '../entities/product.entity';
 
 export class FindProductFiltersDto {
@@ -17,9 +23,19 @@ export class FindProductFiltersDto {
   @IsUUID()
   createdBy?: string;
   @IsOptional()
+  @IsUUID()
+  categoryId?: string;
+  @IsOptional()
+  @IsString()
+  code?: string;
+  @IsOptional()
   pageNumber?: number = 1;
   @IsOptional()
   recordsPerPage?: number = 10;
+  @IsOptional()
+  minUnitPrice?: number;
+  @IsOptional()
+  maxUnitPrice?: number;
   @IsOptional()
   @IsIn(['name', 'createdAt', 'id', 'updatedAt'])
   sortBy?: string;
@@ -28,7 +44,7 @@ export class FindProductFiltersDto {
   sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc';
 }
 export class ProductsDataDto {
-  categories: Product[];
+  products: Product[];
   pagination: PaginationDto;
 }
 export class ProductsResponseDto {
