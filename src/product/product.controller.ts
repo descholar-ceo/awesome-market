@@ -19,16 +19,21 @@ import {
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductService } from './product.service';
+import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
+import { User } from '@/user/entities/user.entity';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('products')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
-  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME, BUYER_ROLE_NAME])
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Post()
-  async create(@Body() createProductData: CreateProductDto) {
-    return await this.productService.create(createProductData);
+  async create(
+    @Body() createProductData: CreateProductDto,
+    @CurrentUser() currUser: User,
+  ) {
+    return await this.productService.create(createProductData, currUser);
   }
 
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME, BUYER_ROLE_NAME])
