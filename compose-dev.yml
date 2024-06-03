@@ -23,7 +23,6 @@ services:
   awesome_postgres:
     image: postgres:14-alpine
     container_name: awesome_db_container
-    # command: sh -c "psql -U $DB_USERNAME -d $DB_DATABASE -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'"
     env_file:
       - "./.env"
     environment:
@@ -34,6 +33,9 @@ services:
       - type: volume
         source: postgres_data
         target: /var/lib/postgresql
+      - type: bind
+        source: ./deployments/docker-entrypoint-initdb.d
+        target: /docker-entrypoint-initdb.d
     ports:
       - $HOST_DB_PORT:$DB_PORT
     networks:
