@@ -91,6 +91,7 @@ After a successful installation, you can start developing features
 #### Feature testing
 :warning: Currently Unit tests are missing, but I will add them very soon
 ##### Configure SendGrid API Key and Email Address
+In order to make sure that all features work correctly, including live email notifications, you need a SendGrid API key and a whitelisted email from SendGrid. Follow these steps to obtain the required values:
 1. **Sign up for SendGrid:** If you don't already have a SendGrid account, sign up at [SendGrid](https://sendgrid.com/).
 2. **Create an API Key:**
   - After logging into your SendGrid account, navigate to the "API Keys" section under "Settings".
