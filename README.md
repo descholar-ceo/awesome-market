@@ -128,6 +128,13 @@ yarn migration:create name-of-your-migration-file
 ```sh
 yarn migration:run
 ```
+#### Token Authentication
+For protected endpoints, you need to include the Authorization header in your request. The value should be in the format `Bearer YOUR_ACCESS_TOKEN`. Here is an example of how to include it in your request headers:
+```http
+GET /protected-endpoint HTTP/1.1
+Host: localhost:[HOST_PORT]
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
 
 ### Access the API
 You can access the API at the endpoint: http://localhost:[HOST_PORT] where HOST_PORT is the value you passed in the .env file.
