@@ -80,7 +80,6 @@ export class ReviewService {
         'You cannot update a review that you do not own',
       );
     }
-    console.log('===>updateReviewData: ', updateReviewData);
     review.updatedBy = currUser;
     review.ratedBy = currUser;
     Object.assign(review, updateReviewData);
