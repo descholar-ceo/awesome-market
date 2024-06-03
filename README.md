@@ -85,5 +85,8 @@ You can access the API at the endpoint: http://localhost:[HOST_PORT] where HOST_
 ### Access API Docs
 Go to http://localhost:[HOST_PORT]/api-docs
 
+### Schema file
+You can find the db schema pdf file inside the the `awesome-market/db/awesome-market.pdf` directory or find it on this link: [Awesome Market Schema](https://dbdiagram.io/d/awesome-market-6655d24bb65d933879e0c98f)
+
 ### Contribution
 Feel free to fork this repository and make contributions. Pull requests are welcome.
