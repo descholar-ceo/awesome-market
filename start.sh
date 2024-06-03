@@ -19,6 +19,22 @@ install_global_yarn() {
   fi
 }
 
+check_migration_dir() {
+local MIGRATIONS_FROM_DIST_DIR="./dist/db/migrations/"
+local MIGRATIONS_FROM_DEV_DIR='./db/migrations/'
+if ! [ -d "$MIGRATIONS_FROM_DIST_DIR" ]; then
+  if [ -d "$MIGRATIONS_FROM_DEV_DIR" ]; then
+    echo "Migrations directory does not exist in dist folder but it exists in dev directory, copying it to the dist folder..."
+    mkdir -p $MIGRATIONS_FROM_DIST_DIR
+    cp -r $MIGRATIONS_FROM_DEV_DIR $MIGRATIONS_FROM_DIST_DIR
+  else
+    echo "Migrations directory does not exist in both dist and dev directories."
+  fi
+else
+  echo "Migration files are set correctly..."
+fi
+}
+
 check_docker_network() {
   local AWESOME_NETWORK_NAME="awesome_network"
   if ! docker network inspect "$AWESOME_NETWORK_NAME" &> /dev/null; then
@@ -46,6 +62,7 @@ else
   fi
   if [[ "$1" == "dev" || "$1" == "qa" ]]; then
     check_docker_network
+    check_migration_dir
     echo "Starting awesome-market in: $1 environment..."
     docker compose -p awesome-market-db -f "./compose-$1.yml" --profile db up -d
     docker compose -p awesome-market-api-container -f "./compose-$1.yml" --profile api up
