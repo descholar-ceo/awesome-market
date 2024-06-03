@@ -5,8 +5,8 @@ import { UserService } from '@/user/user.service';
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   Logger,
-  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
@@ -18,6 +18,7 @@ import { Order } from './entities/order.entity';
 import { ConfigService } from '@/config/config.service';
 import { NODE_ENV } from '@/config/config.utils';
 import { PRODUCTION } from '@/common/constants.common';
+import { OrderItemService } from '@/order-item/order-item.service';
 
 @Injectable()
 export class OrderService {
@@ -28,44 +29,56 @@ export class OrderService {
     private readonly userService: UserService,
     private readonly dataSource: DataSource,
     private readonly config: ConfigService,
+    private readonly orderItemService: OrderItemService,
   ) {}
 
   async create(
-    createOrderData: CreateOrderDto,
+    createOrderData: CreateOrderDto[],
     currUser: User,
   ): Promise<OrderResponseDto> {
     const queryRunner = this.dataSource.createQueryRunner();
-
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const { inventoryId, quantity } = createOrderData;
-      const inventory = (await this.inventoryService.findById(inventoryId))
+      const buyer = (await this.userService.findById(currUser.id, queryRunner))
         ?.data;
-      if (!inventory) throw new NotFoundException('Inventory not found');
-      if (inventory.quantity < quantity) {
-        throw new BadRequestException(
-          'Ordered quantity is greater than the inventory',
+      const newOrder = await this.orderRepository.create({
+        buyer,
+        updatedBy: buyer,
+      });
+      for (const currData of createOrderData) {
+        const { inventoryId, quantity } = currData;
+        const inventory = (
+          await this.inventoryService.findById(inventoryId, queryRunner)
+        )?.data;
+        if (inventory?.quantity < quantity) {
+          throw new BadRequestException(
+            'Ordered quantity is greater than the inventory',
+          );
+        }
+        await queryRunner.manager.save(newOrder);
+        const orderItem = await this.orderItemService.create(
+          { order: newOrder, inventory, quantity },
+          queryRunner,
         );
+        if (!!orderItem) {
+          const updatedInventory =
+            await this.inventoryService.decreaseInventory(
+              inventory.id,
+              { quantity: currData.quantity },
+              currUser,
+              queryRunner,
+            );
+          console.log('===>updatedInventory: ', updatedInventory?.data);
+        } else {
+          throw new InternalServerErrorException('Order Item not created!');
+        }
       }
-      const order = await this.orderRepository.create(createOrderData);
-      order.inventory = inventory;
-      order.buyer = (await this.userService.findById(currUser.id))?.data;
-      order.updatedBy = currUser;
-      await queryRunner.manager.save(order);
-      inventory.quantity -= order.quantity;
-      inventory.updatedBy = currUser;
-      await this.inventoryService.decreaseInventory(
-        inventory.id,
-        { quantity: order.quantity },
-        currUser,
-        queryRunner,
-      );
       await queryRunner.commitTransaction();
       return {
         status: statusCodes.CREATED,
         message: statusNames.CREATED,
-        data: plainToInstance(Order, order, {
+        data: plainToInstance(Order, newOrder, {
           excludeExtraneousValues: true,
         }),
       };

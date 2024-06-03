@@ -27,7 +27,7 @@ export class OrderController {
   @Roles([ADMIN_ROLE_NAME, BUYER_ROLE_NAME])
   @Post()
   create(
-    @Body() createOrderDto: CreateOrderDto,
+    @Body() createOrderDto: CreateOrderDto[],
     @CurrentUser() currUser: User,
   ): Promise<OrderResponseDto> {
     return this.orderService.create(createOrderDto, currUser);

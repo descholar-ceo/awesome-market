@@ -1,5 +1,5 @@
 import { prepareUniqueCode } from '@/common/utils/strings.utils';
-import { Inventory } from '@/inventory/entities/inventory.entity';
+import { OrderItem } from '@/order-item/entities/order-item.entity';
 import { User } from '@/user/entities/user.entity';
 import { Expose } from 'class-transformer';
 import {
@@ -8,6 +8,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryColumn,
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
@@ -45,15 +46,15 @@ export class Order {
   @Expose()
   updatedBy: User;
 
-  @ManyToOne(() => Inventory, (inventory) => inventory.orders)
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
   @Expose()
-  inventory: Inventory;
+  orderItems: OrderItem[];
 
   @BeforeInsert()
   generateUniqIds() {
     this.id = uuidV4();
     this.code = prepareUniqueCode(this.buyer.firstName, {
-      name: this.inventory.product.name,
+      name: 'order',
     });
   }
 }

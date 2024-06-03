@@ -1,3 +1,4 @@
+import { CommonResponseDto } from '@/common/common.dtos';
 import { PRODUCTION } from '@/common/constants.common';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
 import { decodeToken, encodeToken } from '@/common/utils/token.utils';
@@ -18,8 +19,9 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { plainToInstance } from 'class-transformer';
-import { DeleteResult, Repository } from 'typeorm';
+import { DeleteResult, QueryRunner, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UserResponseDto } from './dto/find-product.dto';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -28,8 +30,6 @@ import {
   prepareAccountApprovedMessageBody,
   prepareAccountPendingNotifyBody,
 } from './user.utils';
-import { CommonResponseDto } from '@/common/common.dtos';
-import { UserResponseDto } from './dto/find-product.dto';
 
 @Injectable()
 export class UserService {
@@ -227,11 +227,20 @@ export class UserService {
     };
   }
 
-  async findById(id: string): Promise<UserResponseDto> {
-    const user = await this.userRepository.findOne({
+  async findById(
+    id: string,
+    queryRunner?: QueryRunner,
+  ): Promise<UserResponseDto> {
+    const findCondition = {
       where: { id },
-      relations: ['inventories', 'createdProducts'],
-    });
+      relations: ['inventories', 'orders'],
+    };
+    let user: User;
+    if (!!queryRunner) {
+      user = await queryRunner.manager.findOne(User, findCondition);
+    } else {
+      user = await this.userRepository.findOne(findCondition);
+    }
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
