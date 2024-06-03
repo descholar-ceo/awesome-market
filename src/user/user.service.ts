@@ -144,7 +144,7 @@ export class UserService {
     if (!refreshToken) {
       return {
         status: statusCodes.BAD_REQUEST,
-        message: 'Refresh token missing from headers',
+        message: 'Pass authorization that should be the refresh token',
       };
     }
     try {

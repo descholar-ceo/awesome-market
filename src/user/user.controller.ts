@@ -36,7 +36,7 @@ export class UserController {
   }
 
   @Get('/get-new-access-token')
-  async refreshAccessToken(@Headers('refresh-token') refreshToken: string) {
+  async refreshAccessToken(@Headers('authorization') refreshToken: string) {
     return await this.userService.refreshAccessToken(refreshToken);
   }
 
