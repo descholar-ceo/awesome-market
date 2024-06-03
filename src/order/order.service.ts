@@ -110,6 +110,7 @@ export class OrderService {
       sortBy,
       sortOrder,
       code,
+      status,
     } = filters;
     const { startDate, endDate } = getDateInterval(
       createdFromDate,
@@ -122,6 +123,7 @@ export class OrderService {
       sortBy,
       sortOrder?.toUpperCase(),
       code,
+      status,
     );
 
     const totalRecords = await findOrdersQuery.getCount();
@@ -170,6 +172,7 @@ export class OrderService {
     sortBy?: string,
     sortOrder?: any,
     code?: string,
+    status?: string,
   ): SelectQueryBuilder<Order> {
     const query = this.orderRepository.createQueryBuilder('order');
 
@@ -178,7 +181,11 @@ export class OrderService {
     }
 
     if (code) {
-      query.andWhere('order.code.id = :code', { code });
+      query.andWhere('order.code = :code', { code });
+    }
+
+    if (status) {
+      query.andWhere('order.status = :status', { status });
     }
 
     if (startDate) {
