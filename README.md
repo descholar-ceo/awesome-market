@@ -78,6 +78,14 @@ cp .env.example .env
 ```sh
 ./start.sh dev
 ```
+### Known Issue
+In case the server does not starts successfully, and throws this error: `ERROR [ExceptionHandler] relation "roles" does not exist`, follow the following steps to resolve it:
+
+1. Open another terminal
+2. Run `./connect-to-api.sh`
+3. Run `yarn migration:run`
+4. Go back to the terminal that was running the server and click `CTRL + C` to s
+5. Run again `./start.sh dev`
 
 ### Access the API
 You can access the API at the endpoint: http://localhost:[HOST_PORT] where HOST_PORT is the value you passed in the .env file.
