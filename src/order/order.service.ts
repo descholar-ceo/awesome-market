@@ -1,5 +1,9 @@
+import { PRODUCTION } from '@/common/constants.common';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
+import { ConfigService } from '@/config/config.service';
+import { NODE_ENV } from '@/config/config.utils';
 import { InventoryService } from '@/inventory/inventory.service';
+import { OrderItemService } from '@/order-item/order-item.service';
 import { User } from '@/user/entities/user.entity';
 import { UserService } from '@/user/user.service';
 import {
@@ -13,12 +17,7 @@ import { plainToInstance } from 'class-transformer';
 import { DataSource, Repository } from 'typeorm';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderResponseDto } from './dto/find-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
 import { Order } from './entities/order.entity';
-import { ConfigService } from '@/config/config.service';
-import { NODE_ENV } from '@/config/config.utils';
-import { PRODUCTION } from '@/common/constants.common';
-import { OrderItemService } from '@/order-item/order-item.service';
 
 @Injectable()
 export class OrderService {
@@ -62,14 +61,12 @@ export class OrderService {
           queryRunner,
         );
         if (!!orderItem) {
-          const updatedInventory =
-            await this.inventoryService.decreaseInventory(
-              inventory.id,
-              { quantity: currData.quantity },
-              currUser,
-              queryRunner,
-            );
-          console.log('===>updatedInventory: ', updatedInventory?.data);
+          await this.inventoryService.decreaseInventory(
+            inventory.id,
+            { quantity: currData.quantity },
+            currUser,
+            queryRunner,
+          );
         } else {
           throw new InternalServerErrorException('Order Item not created!');
         }
@@ -94,21 +91,5 @@ export class OrderService {
     } finally {
       await queryRunner.release();
     }
-  }
-
-  findAll() {
-    return `This action returns all order`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} order`;
-  }
-
-  update(id: number, updateOrderDto: UpdateOrderDto) {
-    return `This action updates a #${id} order`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} order`;
   }
 }
