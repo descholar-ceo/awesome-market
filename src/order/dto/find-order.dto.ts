@@ -19,9 +19,6 @@ export class FindOrderFiltersDto {
   @IsUUID()
   buyerId?: string;
   @IsOptional()
-  @IsUUID()
-  inventoryId?: string;
-  @IsOptional()
   @IsString()
   code?: string;
   @IsOptional()
@@ -29,24 +26,20 @@ export class FindOrderFiltersDto {
   @IsOptional()
   recordsPerPage?: number = 10;
   @IsOptional()
-  minQuantity?: number;
-  @IsOptional()
-  maxQuantity?: number;
-  @IsOptional()
   @IsIn(['quantity', 'createdAt', 'id', 'updatedAt'])
   sortBy?: string;
   @IsOptional()
   @IsIn(['asc', 'desc', 'ASC', 'DESC'])
   sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc';
 }
-export class InventoriesDataDto {
-  inventories: Order[];
+export class OrdersDataDto {
+  orders: Order[];
   pagination: PaginationDto;
 }
-export class InventoriesResponseDto {
+export class OrdersResponseDto {
   status: number;
   message: string;
-  data?: InventoriesDataDto;
+  data?: OrdersDataDto;
 }
 export class OrderResponseDto {
   status: number;
