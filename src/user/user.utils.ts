@@ -57,7 +57,7 @@ export const prepareAccountApprovalEmailBody = (
       <p>
         Awesome Market Engineering Team
       </p>
-      <p><a href="https://awesomity.rw/">Awesome Market Place</a></p>
+      <p><a href="https://awesome-market.com/">Awesome Market Place</a></p>
     </div>
     `;
   const text = `Dear ${adminFName} ${adminLName},
@@ -89,7 +89,7 @@ export const prepareAccountApprovalEmailBody = (
       Best regards, <br>
 
       Awesome Market Engineering Team
-      https://awesomity.rw/
+      https://awesome-market.com/
     `;
   return { html, text };
 };
@@ -126,7 +126,7 @@ export const prepareAccountPendingNotifyBody = (
     <p>
       Awesome Market Engineering Team
     </p>
-    <p><a href="https://awesomity.rw/">Awesome Market Place</a></p>
+    <p><a href="https://awesome-market.com/">Awesome Market Place</a></p>
   </div>
   `;
   const text = `Dear ${sellerFName} ${sellerLName},
@@ -145,7 +145,7 @@ export const prepareAccountPendingNotifyBody = (
       Best regards,
 
     Awesome Market Engineering Team
-    https://awesomity.rw/
+    https://awesome-market.com/
   `;
   return { html, text };
 };
@@ -172,7 +172,7 @@ export const prepareAccountApprovedMessageBody = (
       Here are a few key steps to get started:
     </p>
     <ol>
-      <li><strong>Log In: </strong> Visit https://awesomity.rw/ and enter your credentials to access your seller dashboard.</li>
+      <li><strong>Log In: </strong> Visit https://awesome-market.com/ and enter your credentials to access your seller dashboard.</li>
       <li><strong>Create Products: </strong> Use the dashboard to create product listings, including detailed descriptions, images, and pricing information.</li>
       <li><strong>Manage Inventory: </strong> Keep track of your inventory levels and update them as needed to ensure accurate availability for buyers.</li>
     </ol>
@@ -187,7 +187,7 @@ export const prepareAccountApprovedMessageBody = (
     <p>
       Awesome Market Engineering Team
     </p>
-    <p><a href="https://awesomity.rw/">Awesome Market Place</a></p>
+    <p><a href="https://awesome-market.com/">Awesome Market Place</a></p>
   </div>
   `;
   const text = `Dear ${sellerFName} ${sellerLName},
@@ -200,7 +200,7 @@ export const prepareAccountApprovedMessageBody = (
     
       Here are a few key steps to get started:
 
-      1. Log In: Visit https://awesomity.rw/ and enter your credentials to access your seller dashboard.
+      1. Log In: Visit https://awesome-market.com/ and enter your credentials to access your seller dashboard.
 
       2. Create Products: Use the dashboard to create product listings, including detailed descriptions, images, and pricing information.
 
@@ -213,7 +213,7 @@ export const prepareAccountApprovedMessageBody = (
       Best regards,
 
     Awesome Market Engineering Team
-    https://awesomity.rw/
+    https://awesome-market.com/
   `;
   return { html, text };
 };
