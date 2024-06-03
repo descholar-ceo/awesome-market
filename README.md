@@ -12,6 +12,7 @@ Awesome Market is a marketplace API with features for user registration, login, 
   - Admin: Full access to all endpoints
   - Seller: Add products, manage inventories
   - Buyer: Create orders
+- Product Reviews
 
 ### Endpoints
 
@@ -21,12 +22,12 @@ Awesome Market is a marketplace API with features for user registration, login, 
 - **Product Management (Seller)**
 - **Inventory Management (Seller)**
 - **Order Management (Buyer)**
+- **Product Reviews Management**
 
 ### Missing Endpoints
 
 - Order Processing
 - Order Checkout [Payment]
-- Order Listings
 
 ## Setup
 
@@ -81,11 +82,31 @@ cp .env.example .env
 ### Known Issue
 In case the server does not starts successfully, and throws this error: `ERROR [ExceptionHandler] relation "roles" does not exist`, follow the following steps to resolve it:
 
-1. Open another terminal
-2. Run `./connect-to-api.sh`
-3. Run `yarn migration:run`
-4. Go back to the terminal that was running the server and click `CTRL + C` to s
-5. Run again `./start.sh dev`
+1. Click `CTRL + C` to stop the server
+2. Run again `./start.sh dev` to start the server
+3. You should see the terminal all green
+
+### Development
+After a successful installation, you can start developing features
+
+### Feature testing
+:warning: Currently Unit tests are missing, but I will add them very soon
+#### Configure SendGrid API Key and Email Address
+1. **Sign up for SendGrid:** If you don't already have a SendGrid account, sign up at [SendGrid](https://sendgrid.com/).
+2. **Create an API Key:**
+  - After logging into your SendGrid account, navigate to the "API Keys" section under "Settings".
+  - Click on "Create API Key" and give it a name.
+  - Assign the necessary permissions and create the key.
+  - Copy the generated API key.
+3. **Whitelist an Email Address:**
+  - Navigate to the "Sender Authentication" section under "Settings".
+  - Follow the steps to verify your email address. SendGrid will send a verification email to the address you provide.
+  - Once verified, this email address will be whitelisted and can be used to send emails.
+4. **Update .env File:** Add the following variables to your `.env` file with the obtained values:
+```sh
+SENDGRID_API_KEY=your_sendgrid_api_key
+APP_MAILING_ADDRESS=your_whitelisted_email
+```
 
 ### Access the API
 You can access the API at the endpoint: http://localhost:[HOST_PORT] where HOST_PORT is the value you passed in the .env file.
