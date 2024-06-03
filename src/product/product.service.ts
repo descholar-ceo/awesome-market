@@ -107,7 +107,7 @@ export class ProductService {
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.inventories', 'inventories')
       .leftJoinAndSelect('inventories.owner', 'inventoryOwner')
-      .leftJoinAndSelect('inventories.orders', 'orders')
+      .leftJoinAndSelect('inventories.orderItems.order', 'orders')
       .leftJoinAndSelect('orders.buyer', 'buyer')
       .leftJoinAndSelect('product.reviews', 'reviews')
       .leftJoinAndSelect('reviews.ratedBy', 'ratedBy')
@@ -143,8 +143,8 @@ export class ProductService {
         'category',
         'inventories',
         'reviews',
-        'inventories.orders',
-        'inventories.orders.buyer',
+        'inventories.orderItems.order',
+        'inventories.orderItems.order.buyer',
       ],
     });
 

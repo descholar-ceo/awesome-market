@@ -1,5 +1,5 @@
 import { prepareUniqueCode } from '@/common/utils/strings.utils';
-import { Order } from '@/order/entities/order.entity';
+import { OrderItem } from '@/order-item/entities/order-item.entity';
 import { Product } from '@/product/entities/product.entity';
 import { User } from '@/user/entities/user.entity';
 import { Expose } from 'class-transformer';
@@ -49,9 +49,9 @@ export class Inventory {
   @Expose()
   product: Product;
 
-  @OneToMany(() => Order, (order) => order.inventory)
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.inventory)
   @Expose()
-  orders: Order[];
+  orderItems: OrderItem[];
 
   @BeforeInsert()
   generateUniqIds() {

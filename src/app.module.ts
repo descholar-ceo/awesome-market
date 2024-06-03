@@ -19,6 +19,7 @@ import { CategoryModule } from './category/category.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { ReviewModule } from './review/review.module';
 import { OrderModule } from './order/order.module';
+import { OrderItemModule } from './order-item/order-item.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { OrderModule } from './order/order.module';
     InventoryModule,
     ReviewModule,
     OrderModule,
+    OrderItemModule,
   ],
   controllers: [AppController],
   providers: [AppService, InitialAdminProvider],
