@@ -21,6 +21,9 @@ export const encodeToken = async (dataToEncode, expiresIn): Promise<string> => {
 };
 
 export const decodeToken = (token: string): any => {
+  if (token.startsWith('Bearer ')) {
+    token = token.slice(7, token.length).trimStart();
+  }
   const base4tokenHeader = JSON.parse(base64url.decode(token.split('.')[0]));
   if (
     !base4tokenHeader.alg ||
