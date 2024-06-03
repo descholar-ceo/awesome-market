@@ -80,7 +80,7 @@ cp .env.example .env
 ./start.sh dev
 ```
 ### Known Issue
-In case the server does not starts successfully, and throws this error: `ERROR [ExceptionHandler] relation "roles" does not exist`, follow the following steps to resolve it:
+In case the server fails to start, and throws this error: `ERROR [ExceptionHandler] relation "roles" does not exist`, follow the following steps to resolve it:
 
 1. Click `CTRL + C` to stop the server
 2. Run again `./start.sh dev` to start the server
