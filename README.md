@@ -88,6 +88,8 @@ In case the server fails to start, and throws this error: `ERROR [ExceptionHandl
 
 ### Development
 After a successful installation, you can start developing features
+#### Environment variables validation
+To ensure environment safety and consistency across development environments, the application includes logic to validate environment variables before starting the server using [Joi](https://www.npmjs.com/package//joi?activeTab=versions). Some environment variables are marked as required, while others are optional. If any value is added that is not validated, the server will not start. This ensures that anyone working on this project has the same environment setup, promoting consistency and preventing configuration errors.
 #### Feature testing
 :warning: Currently Unit tests are missing, but I will add them very soon
 ##### Configure SendGrid API Key and Email Address
