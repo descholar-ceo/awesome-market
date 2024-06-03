@@ -88,10 +88,9 @@ In case the server does not starts successfully, and throws this error: `ERROR [
 
 ### Development
 After a successful installation, you can start developing features
-
-### Feature testing
+#### Feature testing
 :warning: Currently Unit tests are missing, but I will add them very soon
-#### Configure SendGrid API Key and Email Address
+##### Configure SendGrid API Key and Email Address
 1. **Sign up for SendGrid:** If you don't already have a SendGrid account, sign up at [SendGrid](https://sendgrid.com/).
 2. **Create an API Key:**
   - After logging into your SendGrid account, navigate to the "API Keys" section under "Settings".
@@ -106,6 +105,25 @@ After a successful installation, you can start developing features
 ```sh
 SENDGRID_API_KEY=your_sendgrid_api_key
 APP_MAILING_ADDRESS=your_whitelisted_email
+```
+#### Migrations
+##### Creating an empty migration file
+1. Before creating a migration, you need to be using the same node-version specified by the project. To do that, open a terminal, navigate to `awesome-market` directory and run the following command:
+```sh
+nvm use
+```
+2. And then create a migration by running:
+```sh
+yarn migration:create name-of-your-migration-file
+```
+##### Running migrations
+1. Before running migrations, you need to be connected to the API container first. To do that, open a terminal, navigate to `awesome-market` directory and run the following command:
+```sh
+./connect-to-api.sh
+```
+2. And then run the migrations by running:
+```sh
+yarn migration:run
 ```
 
 ### Access the API
