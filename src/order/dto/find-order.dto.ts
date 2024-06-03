@@ -1,12 +1,14 @@
 import { PaginationDto } from '@/common/common.dtos';
 import {
   IsDateString,
+  IsEnum,
   IsIn,
   IsOptional,
   IsString,
   IsUUID,
 } from 'class-validator';
 import { Order } from '../entities/order.entity';
+import { orderStatuses } from '../order.constants';
 
 export class FindOrderFiltersDto {
   @IsOptional()
@@ -21,6 +23,10 @@ export class FindOrderFiltersDto {
   @IsOptional()
   @IsString()
   code?: string;
+  @IsOptional()
+  @IsString()
+  @IsEnum(orderStatuses)
+  status?: string;
   @IsOptional()
   pageNumber?: number = 1;
   @IsOptional()
