@@ -11,6 +11,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
@@ -162,6 +163,25 @@ export class OrderService {
           recordsPerPage: limit ?? 10,
         },
       },
+    };
+  }
+
+  async findById(id: string): Promise<OrderResponseDto> {
+    const order = await this.orderRepository.findOne({
+      where: { id },
+      relations: ['buyer', 'orderItems.inventory.product'],
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+
+    return {
+      status: statusCodes.OK,
+      message: statusNames.OK,
+      data: plainToInstance(Order, order, {
+        excludeExtraneousValues: true,
+      }),
     };
   }
 

@@ -2,13 +2,23 @@ import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
 import { Roles } from '@/decorators/roles/roles.decorator';
 import { AuthGuard } from '@/guards/auth/auth.guard';
 import { RolesGuard } from '@/guards/roles/roles.guard';
+import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
 import {
   ADMIN_ROLE_NAME,
   BUYER_ROLE_NAME,
   SELLER_ROLE_NAME,
 } from '@/role/role.constants';
 import { User } from '@/user/entities/user.entity';
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+  UsePipes,
+} from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import {
   FindOrderFiltersDto,
@@ -37,5 +47,12 @@ export class OrderController {
     @Query() filters: FindOrderFiltersDto,
   ): Promise<OrdersResponseDto> {
     return await this.orderService.findWithFilters(filters);
+  }
+
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
+  @Get(':id')
+  @UsePipes(new ValidateUuidPipe())
+  findById(@Param('id') id: string) {
+    return this.orderService.findById(id);
   }
 }
