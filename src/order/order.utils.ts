@@ -1,11 +1,19 @@
+import { generateTokens } from '@/common/utils/token.utils';
 import { PendingOrderNotificationEmailBodyOptionsDto } from './dto/notification.dto';
+import {
+  GENERAL_JWT_EXPIRES,
+  dotenvConfig,
+  getEnvironmentValue,
+  validateEnvironment,
+} from '@/config/config.utils';
 
-export const prepareOrderPendingNotificationEmailBody = (
+export const prepareOrderPendingNotificationEmailBody = async (
   data: PendingOrderNotificationEmailBodyOptionsDto,
-): { html: string; text: string } => {
+): Promise<{ html: string; text: string }> => {
   const {
     order: {
       id: orderId,
+      buyer,
       buyer: {
         firstName: customerFName,
         lastName: customerLName,
@@ -16,6 +24,11 @@ export const prepareOrderPendingNotificationEmailBody = (
     },
     apiUrl,
   } = data;
+  const buyerToken = await generateTokens(buyer, 'otherTokens');
+  const linkExpirationTime = getEnvironmentValue<string>(
+    validateEnvironment(dotenvConfig),
+    GENERAL_JWT_EXPIRES,
+  );
   const html = `<h4>Dear ${customerFName} ${customerLName},</h4>
       <div>
         <p>
@@ -59,7 +72,7 @@ export const prepareOrderPendingNotificationEmailBody = (
             : ''
         }
         <ol>
-          <li><strong>Payment: </strong>Please complete your payment by clicking on this <a href="${apiUrl}/orders/${orderId}/checkout?success-url=${apiUrl}/orders/${orderId}/success&cancel-url=${apiUrl}/orders/${orderId}/cancel">link</a></li>
+          <li><strong>Payment: </strong>Please complete your payment by clicking on this <a href="${apiUrl}/orders/${orderId}/checkout?success-url=${apiUrl}/orders/${orderId}/success&cancel-url=${apiUrl}/orders/${orderId}/cancel&token=${buyerToken}">link</a><em>Please Note that the link will expire in ${linkExpirationTime}</em></li>
           <li><strong>Processing: </strong>Once we receive your payment, your order will be processed by the respective sellers.</li>
         </ol>
         <p>
@@ -109,8 +122,8 @@ export const prepareOrderPendingNotificationEmailBody = (
       ${!!shippingAddress ? 'Shipping Address:' + shippingAddress : ''}
     
       Next Steps:
-      Payment: Please complete your payment by clicking on this <a href="${apiUrl}/orders/${orderId}/checkout?success-url=${apiUrl}/orders/${orderId}/success&cancel-url=${apiUrl}/orders/${orderId}/cancel</li>
-      Processing: Once we receive your payment, your order will be processed by the respective sellers.</li>
+      Payment: Please complete your payment by clicking on this <a href="${apiUrl}/orders/${orderId}/checkout?success-url=${apiUrl}/orders/${orderId}/success&cancel-url=${apiUrl}/orders/${orderId}/cancel&token=${buyerToken} Please Note that the link will expire in ${linkExpirationTime}
+      Processing: Once we receive your payment, your order will be processed by the respective sellers.
       
       Contact the Seller: If you have any questions about your order, you can contact the sellers through our platform's messaging system
       If you need further assistance, feel free to reply to this email.

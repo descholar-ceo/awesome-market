@@ -1,16 +1,14 @@
 import { CommonResponseDto } from '@/common/common.dtos';
 import { PRODUCTION } from '@/common/constants.common';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
-import { decodeToken, encodeToken } from '@/common/utils/token.utils';
+import { decodeToken, generateTokens } from '@/common/utils/token.utils';
 import { ConfigService } from '@/config/config.service';
 import {
-  ACCESS_JWT_EXPIRES,
   API_URL,
   APP_MAILING_ADDRESS,
   BUYER_ROLE,
   INITIAL_ADMIN_EMAIL,
   NODE_ENV,
-  REFRESH_JWT_EXPIRES,
   SELLER_ROLE,
 } from '@/config/config.utils';
 import { MailService } from '@/mail/mail.service';
@@ -127,7 +125,7 @@ export class UserService {
       };
     }
     if (bcrypt.compareSync(password, user.password)) {
-      const { accessToken, refreshToken } = await this.generateTokens(user);
+      const { accessToken, refreshToken } = await generateTokens(user);
       return {
         status: statusCodes.OK,
         message: statusNames.OK,
@@ -159,7 +157,7 @@ export class UserService {
           message: 'Refresh token invalid',
         };
       }
-      const { accessToken } = await this.generateTokens(user);
+      const { accessToken } = await generateTokens(user);
       return {
         status: statusCodes.OK,
         message: statusNames.OK,
@@ -283,28 +281,5 @@ export class UserService {
       status: statusCodes.INTERNAL_SERVER_ERROR,
       message: 'Something went wrong, try again',
     };
-  }
-
-  private async generateTokens(user: User): Promise<{
-    accessToken?: string;
-    refreshToken?: string;
-  }> {
-    const { id, roles } = user;
-    const accessTokenData = {
-      id,
-      roles: (roles ?? []).map((currRole) => currRole.name) ?? [],
-    };
-    const refreshTokenData = {
-      id,
-    };
-    const accessToken = await encodeToken(
-      accessTokenData,
-      this.config.get<string>(ACCESS_JWT_EXPIRES),
-    );
-    const refreshToken = await encodeToken(
-      refreshTokenData,
-      this.config.get<string>(REFRESH_JWT_EXPIRES),
-    );
-    return { accessToken, refreshToken };
   }
 }
