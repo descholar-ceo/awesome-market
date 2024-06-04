@@ -26,11 +26,13 @@ export const prepareOrderPendingNotificationEmailBody = (
               .map(
                 (currItem) => `
                     <li>
-                        <p><strong>Item Name: </strong> ${currItem.inventory.product.name} #${currItem.inventory.product.code}</p>
-                        <p><strong>Unit Price: </strong> RWF ${currItem.inventory.product.unitPrice}</p>
-                        <p><strong>Quantity: </strong>${currItem.quantity}</p>
-                        <p><strong>Sub Total: </strong> RWF ${currItem.quantity * currItem.inventory.product.unitPrice}</p>
-                        <p><strong>Seller Names: </strong>${currItem.inventory.owner?.firstName} ${currItem.inventory.owner?.lastName}</p>
+                        <p>
+                          <strong>Item Name: </strong> ${currItem.inventory.product.name} #${currItem.inventory.product.code}<br>
+                          <strong>Unit Price: </strong> RWF ${currItem.inventory.product.unitPrice}<br>
+                          <strong>Quantity: </strong>${currItem.quantity}<br>
+                          <strong>Sub Total: </strong> RWF ${currItem.quantity * currItem.inventory.product.unitPrice}<br>
+                          <strong>Seller Names: </strong>${currItem.inventory.owner?.firstName} ${currItem.inventory.owner?.lastName}
+                        </p>
                     </li>
                 `,
               )
