@@ -54,9 +54,9 @@ export class User {
   @Expose()
   updatedAt: Date;
 
-  @Column()
+  @Column({ nullable: true })
   @Expose()
-  shippingAddress: string;
+  shippingAddress?: string;
 
   // RELATIONS
   @ManyToMany(() => Role, (role) => role.users)
