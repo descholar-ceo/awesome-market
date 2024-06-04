@@ -83,7 +83,7 @@ export class OrderService {
       await queryRunner.commitTransaction();
       const createdOrder = (await this.findById(newOrder.id))?.data;
       if (!!createdOrder) {
-        const { html, text } = prepareOrderPendingNotificationEmailBody({
+        const { html, text } = await prepareOrderPendingNotificationEmailBody({
           order: createdOrder,
           apiUrl: this.config.get<string>(API_URL),
         });
