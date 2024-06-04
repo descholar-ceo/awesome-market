@@ -10,6 +10,7 @@ export enum statusCodes {
   NOT_FOUND = HttpStatus.NOT_FOUND,
   FORBIDDEN = HttpStatus.FORBIDDEN,
   CREATED = HttpStatus.CREATED,
+  SEE_OTHER = HttpStatus.SEE_OTHER,
 }
 
 export enum statusNames {
@@ -22,4 +23,5 @@ export enum statusNames {
   NOT_FOUND = 'NOT_FOUND',
   FORBIDDEN = 'FORBIDDEN',
   CREATED = 'CREATED',
+  SEE_OTHER = 'SEE_OTHER',
 }

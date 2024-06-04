@@ -20,6 +20,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { ReviewModule } from './review/review.module';
 import { OrderModule } from './order/order.module';
 import { OrderItemModule } from './order-item/order-item.module';
+import { StripeModule } from './stripe/stripe.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { OrderItemModule } from './order-item/order-item.module';
     ReviewModule,
     OrderModule,
     OrderItemModule,
+    StripeModule,
   ],
   controllers: [AppController],
   providers: [AppService, InitialAdminProvider],

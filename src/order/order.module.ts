@@ -18,5 +18,6 @@ import { MailModule } from '@/mail/mail.module';
   ],
   controllers: [OrderController],
   providers: [OrderService],
+  exports: [OrderService],
 })
 export class OrderModule {}

@@ -58,6 +58,10 @@ export class User {
   @Expose()
   shippingAddress?: string;
 
+  @Column({ default: 'rwf' })
+  @Expose()
+  currency: string;
+
   // RELATIONS
   @ManyToMany(() => Role, (role) => role.users)
   @JoinTable({

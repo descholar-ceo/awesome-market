@@ -2,7 +2,7 @@ import { PRODUCTION } from '@/common/constants.common';
 import { getDateInterval } from '@/common/utils/dates.utils';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
 import { ConfigService } from '@/config/config.service';
-import { APP_MAILING_ADDRESS, NODE_ENV } from '@/config/config.utils';
+import { API_URL, APP_MAILING_ADDRESS, NODE_ENV } from '@/config/config.utils';
 import { InventoryService } from '@/inventory/inventory.service';
 import { MailService } from '@/mail/mail.service';
 import { OrderItemService } from '@/order-item/order-item.service';
@@ -85,6 +85,7 @@ export class OrderService {
       if (!!createdOrder) {
         const { html, text } = prepareOrderPendingNotificationEmailBody({
           order: createdOrder,
+          apiUrl: this.config.get<string>(API_URL),
         });
         await this.mailService.sendEmail({
           fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
