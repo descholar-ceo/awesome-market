@@ -40,18 +40,20 @@ export class CreateOrders1717345093714 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-          ALTER TABLE "orders"
-          DROP CONSTRAINT "FK_orders_updated_by",
-    
-          ALTER TABLE "orders"
-          DROP CONSTRAINT "FK_orders_buyer_id";
-          
-          ALTER TABLE "orders"
-          DROP CONSTRAINT "FK_orders_inventory_id";
-    
-          DROP TRIGGER IF EXISTS update_orders_updated_at_trigger ON "orders";
-    
-          DROP TABLE IF EXISTS "orders";
-        `);
+      ALTER TABLE "orders"
+      DROP CONSTRAINT "FK_orders_updated_by",
+
+      ALTER TABLE "orders"
+      DROP CONSTRAINT "FK_orders_buyer_id";
+      
+      ALTER TABLE "orders"
+      DROP CONSTRAINT "FK_orders_inventory_id";
+
+      DROP TRIGGER IF EXISTS update_orders_updated_at_trigger ON "orders";
+
+      DROP TABLE IF EXISTS "orders";
+
+      DROP TYPE order_status;
+    `);
   }
 }
