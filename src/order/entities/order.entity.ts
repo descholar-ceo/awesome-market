@@ -12,7 +12,7 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
-import { orderStatuses } from '../order.constants';
+import { orderStatuses, paymentStatuses } from '../order.constants';
 
 @Entity()
 export class Order {
@@ -40,6 +40,10 @@ export class Order {
   @Column({ enum: orderStatuses })
   @Expose()
   status: orderStatuses;
+
+  @Column({ enum: paymentStatuses })
+  @Expose()
+  paymentStatus: paymentStatuses;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'updated_by' })
