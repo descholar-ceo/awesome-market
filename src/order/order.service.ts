@@ -1,13 +1,14 @@
 import { PRODUCTION } from '@/common/constants.common';
+import { getDateInterval } from '@/common/utils/dates.utils';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
 import { ConfigService } from '@/config/config.service';
 import { APP_MAILING_ADDRESS, NODE_ENV } from '@/config/config.utils';
 import { InventoryService } from '@/inventory/inventory.service';
+import { MailService } from '@/mail/mail.service';
 import { OrderItemService } from '@/order-item/order-item.service';
 import { User } from '@/user/entities/user.entity';
 import { UserService } from '@/user/user.service';
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -23,8 +24,6 @@ import {
   OrdersResponseDto,
 } from './dto/find-order.dto';
 import { Order } from './entities/order.entity';
-import { getDateInterval } from '@/common/utils/dates.utils';
-import { MailService } from '@/mail/mail.service';
 import { prepareOrderPendingNotificationEmailBody } from './order.utils';
 
 @Injectable()
@@ -60,9 +59,10 @@ export class OrderService {
           await this.inventoryService.findById(inventoryId, queryRunner)
         )?.data;
         if (inventory?.quantity < quantity) {
-          throw new BadRequestException(
-            'Ordered quantity is greater than the inventory',
-          );
+          return {
+            status: statusCodes.BAD_REQUEST,
+            message: `The ordered quantity is greater than the available stock`,
+          };
         }
         await queryRunner.manager.save(newOrder);
         const orderItem = await this.orderItemService.create(
@@ -96,7 +96,7 @@ export class OrderService {
       }
       return {
         status: statusCodes.CREATED,
-        message: statusNames.CREATED,
+        message: `${statusNames.CREATED}: We have sent you an email that contains payment info`,
         data: plainToInstance(Order, newOrder, {
           excludeExtraneousValues: true,
         }),
