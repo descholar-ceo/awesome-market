@@ -5,3 +5,8 @@ export enum orderStatuses {
   DELIVERED = 'DELIVERED',
   RETURNED = 'RETURNED',
 }
+
+export enum paymentStatuses {
+  UNPAID = 'UNPAID',
+  PAID = 'PAID',
+}
