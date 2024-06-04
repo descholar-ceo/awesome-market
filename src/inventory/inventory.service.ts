@@ -115,7 +115,7 @@ export class InventoryService {
     updateInventoryData: UpdateInventoryDto,
     currUser: User,
   ): Promise<InventoryResponseDto> {
-    const inventory = (await this.findById(id))?.data;
+    const inventory = (await this.findByOne(id))?.data;
     if (!inventory) {
       throw new NotFoundException(`Inventory with ID ${id} not found`);
     }
