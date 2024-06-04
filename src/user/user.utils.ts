@@ -1,6 +1,6 @@
-import { SellerAccountEmailBodyOptionsDto } from '@/mail/mail.dtos';
 import { ADMIN_ROLE_NAME } from '@/role/role.constants';
 import { User } from './entities/user.entity';
+import { SellerAccountEmailBodyOptionsDto } from './dto/notification.dto';
 
 export const prepareAccountApprovalEmailBody = (
   data: SellerAccountEmailBodyOptionsDto,
@@ -70,7 +70,7 @@ export const prepareAccountApprovalEmailBody = (
       
         The new seller ${sellerFName}, has completed the initial registration process and is now awaiting approval from an admin before they can start listing their products for sale. We kindly request your assistance in reviewing their account and approving it for selling on our platform.
       
-      Here are some key details about the seller:
+        Here are some key details about the seller:
       
         First Name: ${sellerFName}
         Last Name: ${sellerLName}
@@ -86,10 +86,11 @@ export const prepareAccountApprovalEmailBody = (
         If you have any questions or require further information about the seller's registration, please feel free to reply to this email.
       
         Thank you for your attention to this matter. Your prompt action in approving the seller's account is greatly appreciated.
-      Best regards, <br>
+      
+        Best regards,
 
-      Awesome Market Engineering Team
-      https://awesome-market.com/
+        Awesome Market Engineering Team
+        https://awesome-market.com/
     `;
   return { html, text };
 };
@@ -144,8 +145,9 @@ export const prepareAccountPendingNotifyBody = (
       Thank you for your cooperation.
       Best regards,
 
-    Awesome Market Engineering Team
-    https://awesome-market.com/
+      Awesome Market Engineering Team
+    
+      https://awesome-market.com/
   `;
   return { html, text };
 };
@@ -212,8 +214,9 @@ export const prepareAccountApprovedMessageBody = (
       
       Best regards,
 
-    Awesome Market Engineering Team
-    https://awesome-market.com/
+      Awesome Market Engineering Team
+    
+      https://awesome-market.com/
   `;
   return { html, text };
 };

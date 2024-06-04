@@ -6,7 +6,7 @@ export class AddShippingAddressToUser1717475721253
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
         ALTER TABLE "users"
-        ADD COLUMN "shipping_address" character varying,        
+        ADD COLUMN "shipping_address" character varying;
     `);
   }
 
