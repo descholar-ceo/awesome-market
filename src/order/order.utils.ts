@@ -3,10 +3,6 @@ import { PendingOrderNotificationEmailBodyOptionsDto } from './dto/notification.
 export const prepareOrderPendingNotificationEmailBody = (
   data: PendingOrderNotificationEmailBodyOptionsDto,
 ): { html: string; text: string } => {
-  console.log(
-    '===>data: ',
-    data.order.orderItems.map((currItem) => currItem.inventory.owner),
-  );
   const {
     order: {
       buyer: {
@@ -26,8 +22,9 @@ export const prepareOrderPendingNotificationEmailBody = (
           Order Summary:
         </h3>
         <ol>
-            ${orderItems.forEach((currItem) => {
-              `
+            ${orderItems
+              .map(
+                (currItem) => `
                     <li>
                         <p><strong>Item Name: </strong> ${currItem.inventory.product.name} #${currItem.inventory.product.code}</p>
                         <p><strong>Unit Price: </strong> RWF ${currItem.inventory.product.unitPrice}</p>
@@ -35,10 +32,11 @@ export const prepareOrderPendingNotificationEmailBody = (
                         <p><strong>Sub Total: </strong> RWF ${currItem.quantity * currItem.inventory.product.unitPrice}</p>
                         <p><strong>Seller Names: </strong>${currItem.inventory.owner?.firstName} ${currItem.inventory.owner?.lastName}</p>
                     </li>
-                `;
-            })}
+                `,
+              )
+              .join('')}
         </ol>
-        <p><strong>Total Amount to Pay: </strong>${orderItems.reduce(
+        <p><strong>Total Amount to Pay: </strong> RWF ${orderItems.reduce(
           (accumulator, currItem) =>
             accumulator +
             currItem.inventory.product.unitPrice * currItem.quantity,
@@ -80,15 +78,17 @@ export const prepareOrderPendingNotificationEmailBody = (
       Thank you for your order! Here are the details of your recent purchase:
     
       Order Summary:
-      ${orderItems.forEach(
-        (currItem) => `  
+      ${orderItems
+        .map(
+          (currItem) => `  
             Item Name:  ${currItem.inventory.product.name} #${currItem.inventory.product.code}
             Unit Price:  RWF ${currItem.inventory.product.unitPrice}
             Quantity: ${currItem.quantity}
             Sub Total:  RWF ${currItem.quantity * currItem.inventory.product.unitPrice}
             Seller Names: ${currItem.inventory.owner?.firstName} ${currItem.inventory.owner?.lastName}
           `,
-      )}
+        )
+        .join('')}
 
       Total Amount to Pay: ${orderItems.reduce(
         (accumulator, currItem) =>

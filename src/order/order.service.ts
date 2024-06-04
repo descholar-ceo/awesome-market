@@ -86,6 +86,7 @@ export class OrderService {
         const { html, text } = prepareOrderPendingNotificationEmailBody({
           order: createdOrder,
         });
+        console.log('===>html: ', html);
         await this.mailService.sendEmail({
           fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
           emailSubject: `Your Order Confirmation - ${createdOrder.code}`,
