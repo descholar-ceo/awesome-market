@@ -54,6 +54,11 @@ export class User {
   @Expose()
   updatedAt: Date;
 
+  @Column()
+  @Expose()
+  shippingAddress: string;
+
+  // RELATIONS
   @ManyToMany(() => Role, (role) => role.users)
   @JoinTable({
     name: 'user_roles',
