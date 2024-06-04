@@ -1,7 +1,7 @@
 import { PRODUCTION } from '@/common/constants.common';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
 import { ConfigService } from '@/config/config.service';
-import { NODE_ENV } from '@/config/config.utils';
+import { APP_MAILING_ADDRESS, NODE_ENV } from '@/config/config.utils';
 import { InventoryService } from '@/inventory/inventory.service';
 import { OrderItemService } from '@/order-item/order-item.service';
 import { User } from '@/user/entities/user.entity';
@@ -24,6 +24,8 @@ import {
 } from './dto/find-order.dto';
 import { Order } from './entities/order.entity';
 import { getDateInterval } from '@/common/utils/dates.utils';
+import { MailService } from '@/mail/mail.service';
+import { prepareOrderPendingNotificationEmailBody } from './order.utils';
 
 @Injectable()
 export class OrderService {
@@ -35,6 +37,7 @@ export class OrderService {
     private readonly dataSource: DataSource,
     private readonly config: ConfigService,
     private readonly orderItemService: OrderItemService,
+    private readonly mailService: MailService,
   ) {}
 
   async create(
@@ -78,6 +81,19 @@ export class OrderService {
         }
       }
       await queryRunner.commitTransaction();
+      const createdOrder = (await this.findById(newOrder.id))?.data;
+      if (!!createdOrder) {
+        const { html, text } = prepareOrderPendingNotificationEmailBody({
+          order: createdOrder,
+        });
+        await this.mailService.sendEmail({
+          fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+          emailSubject: `Your Order Confirmation - ${createdOrder.code}`,
+          emailHtmlBody: html,
+          emailTextBody: text,
+          personalizations: [{ to: { email: createdOrder.buyer.email } }],
+        });
+      }
       return {
         status: statusCodes.CREATED,
         message: statusNames.CREATED,
@@ -169,7 +185,11 @@ export class OrderService {
   async findById(id: string): Promise<OrderResponseDto> {
     const order = await this.orderRepository.findOne({
       where: { id },
-      relations: ['buyer', 'orderItems.inventory.product'],
+      relations: [
+        'buyer',
+        'orderItems.inventory.product',
+        'orderItems.inventory.owner',
+      ],
     });
 
     if (!order) {

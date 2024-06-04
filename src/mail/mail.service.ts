@@ -8,7 +8,7 @@ import { PRODUCTION } from '@/common/constants.common';
 @Injectable()
 export class MailService {
   constructor(private readonly config: ConfigService) {}
-  sendEmail = async (emailSettings: MailDto) => {
+  sendEmail = async (emailSettings: MailDto): Promise<void> => {
     sendGridMailClient.setApiKey(this.config.get<string>(SENDGRID_API_KEY));
     const {
       personalizations,

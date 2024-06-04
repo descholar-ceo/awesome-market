@@ -3,6 +3,10 @@ import { PendingOrderNotificationEmailBodyOptionsDto } from './dto/notification.
 export const prepareOrderPendingNotificationEmailBody = (
   data: PendingOrderNotificationEmailBodyOptionsDto,
 ): { html: string; text: string } => {
+  console.log(
+    '===>data: ',
+    data.order.orderItems.map((currItem) => currItem.inventory.owner),
+  );
   const {
     order: {
       buyer: {
@@ -29,7 +33,7 @@ export const prepareOrderPendingNotificationEmailBody = (
                         <p><strong>Unit Price: </strong> RWF ${currItem.inventory.product.unitPrice}</p>
                         <p><strong>Quantity: </strong>${currItem.quantity}</p>
                         <p><strong>Sub Total: </strong> RWF ${currItem.quantity * currItem.inventory.product.unitPrice}</p>
-                        <p><strong>Seller Names: </strong>${currItem.inventory.product.createdBy.firstName} ${currItem.inventory.product.createdBy.lastName}</p>
+                        <p><strong>Seller Names: </strong>${currItem.inventory.owner?.firstName} ${currItem.inventory.owner?.lastName}</p>
                     </li>
                 `;
             })}
@@ -40,11 +44,15 @@ export const prepareOrderPendingNotificationEmailBody = (
             currItem.inventory.product.unitPrice * currItem.quantity,
           0,
         )}</p>
-        <h3>
-          Shipping Address:
-        </h3>
-        <p>${shippingAddress}</p>
-        <h3>Next Steps:</h4>
+        ${
+          !!shippingAddress
+            ? `<h3>
+                  Shipping Address:
+                </h3>
+                <p>${shippingAddress}</p>
+                <h3>Next Steps:</h4>`
+            : ''
+        }
         <ol>
           <li><strong>Payment: </strong>Please complete your payment</li>
           <li><strong>Processing: </strong>Once we receive your payment, your order will be processed by the respective sellers.</li>
@@ -72,15 +80,15 @@ export const prepareOrderPendingNotificationEmailBody = (
       Thank you for your order! Here are the details of your recent purchase:
     
       Order Summary:
-      ${orderItems.forEach((currItem) => {
-        `  
+      ${orderItems.forEach(
+        (currItem) => `  
             Item Name:  ${currItem.inventory.product.name} #${currItem.inventory.product.code}
             Unit Price:  RWF ${currItem.inventory.product.unitPrice}
             Quantity: ${currItem.quantity}
             Sub Total:  RWF ${currItem.quantity * currItem.inventory.product.unitPrice}
-            Seller Names: ${currItem.inventory.product.createdBy.firstName} ${currItem.inventory.product.createdBy.lastName}
-          `;
-      })}
+            Seller Names: ${currItem.inventory.owner?.firstName} ${currItem.inventory.owner?.lastName}
+          `,
+      )}
 
       Total Amount to Pay: ${orderItems.reduce(
         (accumulator, currItem) =>
@@ -89,8 +97,7 @@ export const prepareOrderPendingNotificationEmailBody = (
         0,
       )}
 
-      Shipping Address:
-      ${shippingAddress}
+      ${!!shippingAddress ? 'Shipping Address:' + shippingAddress : ''}
     
       Next Steps:
       Payment: Please complete your payment</li>

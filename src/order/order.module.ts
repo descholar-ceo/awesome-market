@@ -6,6 +6,7 @@ import { OrderService } from './order.service';
 import { UserModule } from '@/user/user.module';
 import { InventoryModule } from '@/inventory/inventory.module';
 import { OrderItemModule } from '@/order-item/order-item.module';
+import { MailModule } from '@/mail/mail.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { OrderItemModule } from '@/order-item/order-item.module';
     UserModule,
     InventoryModule,
     OrderItemModule,
+    MailModule,
   ],
   controllers: [OrderController],
   providers: [OrderService],
