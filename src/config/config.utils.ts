@@ -44,6 +44,7 @@ export const INITIAL_ADMIN_PASSWORD = 'INITIAL_ADMIN_PASSWORD';
 export const SENDGRID_API_KEY = 'SENDGRID_API_KEY';
 export const APP_MAILING_ADDRESS = 'APP_MAILING_ADDRESS';
 export const API_URL = 'API_URL';
+export const STRIPE_TEST_SECRET_KEY = 'STRIPE_TEST_SECRET_KEY';
 
 export const validateEnvironment = (
   envConfigure: EnvConfigure,
@@ -75,6 +76,7 @@ export const validateEnvironment = (
     [SENDGRID_API_KEY]: Joi.string().optional(),
     [APP_MAILING_ADDRESS]: Joi.string().optional(),
     [API_URL]: Joi.string().required(),
+    [STRIPE_TEST_SECRET_KEY]: Joi.string().required(),
   });
 
   const { error, value: validatedEnvConfig } =
