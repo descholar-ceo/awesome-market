@@ -5,13 +5,16 @@ export const prepareOrderPendingNotificationEmailBody = (
 ): { html: string; text: string } => {
   const {
     order: {
+      id: orderId,
       buyer: {
         firstName: customerFName,
         lastName: customerLName,
+        currency,
         shippingAddress,
       },
       orderItems,
     },
+    apiUrl,
   } = data;
   const html = `<h4>Dear ${customerFName} ${customerLName},</h4>
       <div>
@@ -28,9 +31,9 @@ export const prepareOrderPendingNotificationEmailBody = (
                     <li>
                         <p>
                           <strong>Item Name: </strong> ${currItem.inventory.product.name} #${currItem.inventory.product.code}<br>
-                          <strong>Unit Price: </strong> RWF ${currItem.inventory.product.unitPrice}<br>
-                          <strong>Quantity: </strong>${currItem.quantity}<br>
-                          <strong>Sub Total: </strong> RWF ${currItem.quantity * currItem.inventory.product.unitPrice}<br>
+                          <strong>Unit Price: </strong> ${currency.toUpperCase()} ${currItem.inventory.product.unitPrice?.toLocaleString()}<br>
+                          <strong>Quantity: </strong>${currItem.quantity?.toLocaleString()}<br>
+                          <strong>Sub Total: </strong> ${currency.toUpperCase()} ${(currItem.quantity * currItem.inventory.product.unitPrice)?.toLocaleString()}<br>
                           <strong>Seller Names: </strong>${currItem.inventory.owner?.firstName} ${currItem.inventory.owner?.lastName}
                         </p>
                     </li>
@@ -38,12 +41,14 @@ export const prepareOrderPendingNotificationEmailBody = (
               )
               .join('')}
         </ol>
-        <p><strong>Total Amount to Pay: </strong> RWF ${orderItems.reduce(
-          (accumulator, currItem) =>
-            accumulator +
-            currItem.inventory.product.unitPrice * currItem.quantity,
-          0,
-        )}</p>
+        <p><strong>Total Amount to Pay: </strong> ${currency.toUpperCase()} ${orderItems
+          .reduce(
+            (accumulator, currItem) =>
+              accumulator +
+              currItem.inventory.product.unitPrice * currItem.quantity,
+            0,
+          )
+          ?.toLocaleString()}</p>
         ${
           !!shippingAddress
             ? `<h3>
@@ -54,7 +59,7 @@ export const prepareOrderPendingNotificationEmailBody = (
             : ''
         }
         <ol>
-          <li><strong>Payment: </strong>Please complete your payment</li>
+          <li><strong>Payment: </strong>Please complete your payment by clicking on this <a href="${apiUrl}/orders/${orderId}/checkout?success-url=${apiUrl}/orders/${orderId}/success&cancel-url=${apiUrl}/orders/${orderId}/cancel">link</a></li>
           <li><strong>Processing: </strong>Once we receive your payment, your order will be processed by the respective sellers.</li>
         </ol>
         <p>
@@ -84,25 +89,27 @@ export const prepareOrderPendingNotificationEmailBody = (
         .map(
           (currItem) => `  
             Item Name:  ${currItem.inventory.product.name} #${currItem.inventory.product.code}
-            Unit Price:  RWF ${currItem.inventory.product.unitPrice}
-            Quantity: ${currItem.quantity}
-            Sub Total:  RWF ${currItem.quantity * currItem.inventory.product.unitPrice}
+            Unit Price:  ${currency.toUpperCase()} ${currItem.inventory.product.unitPrice?.toLocaleString()}
+            Quantity: ${currItem.quantity?.toLocaleString()}
+            Sub Total:  ${currency.toUpperCase()} ${currItem.quantity * currItem.inventory.product.unitPrice}
             Seller Names: ${currItem.inventory.owner?.firstName} ${currItem.inventory.owner?.lastName}
           `,
         )
         .join('')}
 
-      Total Amount to Pay: ${orderItems.reduce(
-        (accumulator, currItem) =>
-          accumulator +
-          currItem.inventory.product.unitPrice * currItem.quantity,
-        0,
-      )}
+      Total Amount to Pay: ${orderItems
+        .reduce(
+          (accumulator, currItem) =>
+            accumulator +
+            currItem.inventory.product.unitPrice * currItem.quantity,
+          0,
+        )
+        ?.toLocaleString()}
 
       ${!!shippingAddress ? 'Shipping Address:' + shippingAddress : ''}
     
       Next Steps:
-      Payment: Please complete your payment</li>
+      Payment: Please complete your payment by clicking on this <a href="${apiUrl}/orders/${orderId}/checkout?success-url=${apiUrl}/orders/${orderId}/success&cancel-url=${apiUrl}/orders/${orderId}/cancel</li>
       Processing: Once we receive your payment, your order will be processed by the respective sellers.</li>
       
       Contact the Seller: If you have any questions about your order, you can contact the sellers through our platform's messaging system

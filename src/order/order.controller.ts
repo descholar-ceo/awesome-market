@@ -2,7 +2,7 @@ import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
 import { Roles } from '@/decorators/roles/roles.decorator';
 import { AuthGuard } from '@/guards/auth/auth.guard';
 import { RolesGuard } from '@/guards/roles/roles.guard';
-import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
+import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
 import {
   ADMIN_ROLE_NAME,
   BUYER_ROLE_NAME,
@@ -51,7 +51,7 @@ export class OrderController {
 
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Get(':id')
-  @UsePipes(new ValidateUuidPipe())
+  @UsePipes(new ValidateIdFromParam())
   findById(@Param('id') id: string) {
     return this.orderService.findById(id);
   }
