@@ -97,10 +97,13 @@ export class StripeService {
         .send(`Webhook Error: ${err.message}`);
     }
 
+    const session = event.data.object as Stripe.Checkout.Session;
     switch (event.type) {
       case 'checkout.session.completed':
-        const session = event.data.object as Stripe.Checkout.Session;
         await this.handleCheckoutSessionCompleted(session, res);
+        break;
+      case 'checkout.session.async_payment_failed':
+        await this.handleCheckoutSessionFailed(session, res);
         break;
       default:
         Logger.error(`Unhandled event type ${event.type}`);
@@ -118,7 +121,6 @@ export class StripeService {
     session: Stripe.Checkout.Session,
     res: Response,
   ) {
-    console.log('Checkout Session Completed: ', session);
     const match = session.success_url.match(UUID_REGEX_FROM_ORDERS_URL);
     if (!!match?.length) {
       const orderId = match[1];
@@ -134,6 +136,51 @@ export class StripeService {
           {
             status: orderStatuses.PROCESSING,
             paymentStatus: paymentStatuses.PAID,
+          },
+          order.buyer,
+        );
+        return res.status(statusCodes.OK).send(statusNames.OK);
+      } catch (err) {
+        if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+          Logger.error(err);
+        }
+      }
+      return res
+        .status(statusCodes.INTERNAL_SERVER_ERROR)
+        .send(statusNames.INTERNAL_SERVER_ERROR);
+    } else {
+      if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+        Logger.error(
+          'There was no order id from the success url sent from stripe',
+        );
+      }
+      return res
+        .status(statusCodes.BAD_REQUEST)
+        .send(
+          `${statusNames.BAD_REQUEST}: Missing order id from the success url`,
+        );
+    }
+  }
+
+  private async handleCheckoutSessionFailed(
+    session: Stripe.Checkout.Session,
+    res: Response,
+  ) {
+    console.log('Checkout Session Completed: ', session);
+    const match = session.success_url.match(UUID_REGEX_FROM_ORDERS_URL);
+    if (!!match?.length) {
+      const orderId = match[1];
+      const order = (await this.orderService.findById(orderId))?.data;
+      if (!order) {
+        return res
+          .status(statusCodes.NOT_FOUND)
+          .send(`${statusNames.NOT_FOUND}: Order not found!`);
+      }
+      try {
+        await this.orderService.update(
+          orderId,
+          {
+            paymentStatus: paymentStatuses.FAILED,
           },
           order.buyer,
         );

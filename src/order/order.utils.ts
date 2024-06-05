@@ -72,7 +72,7 @@ export const prepareOrderPendingNotificationEmailBody = async (
             : ''
         }
         <ol>
-          <li><strong>Payment: </strong>Please complete your payment by clicking on this <a href="${apiUrl}/orders/${orderId}/checkout?success-url=${apiUrl}/orders/${orderId}/success&cancel-url=${apiUrl}/orders/${orderId}/cancel&token=${buyerToken}">link</a><em>Please Note that the link will expire in ${linkExpirationTime}</em></li>
+          <li><strong>Payment: </strong>Please complete your payment by clicking on this <a href="${apiUrl}/orders/${orderId}/checkout?success-url=${apiUrl}/orders/${orderId}/success&cancel-url=${apiUrl}/orders/${orderId}/cancel&token=${buyerToken}">link</a><em style="text-decoration:underline;"> Please Note that the link will expire in ${linkExpirationTime}</em></li>
           <li><strong>Processing: </strong>Once we receive your payment, your order will be processed by the respective sellers.</li>
         </ol>
         <p>
@@ -122,7 +122,7 @@ export const prepareOrderPendingNotificationEmailBody = async (
       ${!!shippingAddress ? 'Shipping Address:' + shippingAddress : ''}
     
       Next Steps:
-      Payment: Please complete your payment by clicking on this <a href="${apiUrl}/orders/${orderId}/checkout?success-url=${apiUrl}/orders/${orderId}/success&cancel-url=${apiUrl}/orders/${orderId}/cancel&token=${buyerToken} Please Note that the link will expire in ${linkExpirationTime}
+      Payment: Please complete your payment by clicking on this <a href="${apiUrl}/orders/${orderId}/checkout?success-url=${apiUrl}/orders/${orderId}/success&cancel-url=${apiUrl}/orders/${orderId}/cancel&token=${buyerToken}. Please Note that the link will expire in ${linkExpirationTime}
       Processing: Once we receive your payment, your order will be processed by the respective sellers.
       
       Contact the Seller: If you have any questions about your order, you can contact the sellers through our platform's messaging system

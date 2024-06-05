@@ -9,6 +9,7 @@ export class CreateOrders1717345093714 implements MigrationInterface {
           CREATE TYPE order_status AS ENUM (
             'PENDING',
             'PROCESSING',
+            'SHIPPING',
             'CANCELLED',
             'DELIVERED',
             'RETURNED'

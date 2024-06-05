@@ -10,7 +10,8 @@ export class AddPaymentStatusToOrder1717525126494
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_statuses') THEN
                 CREATE TYPE payment_statuses AS ENUM (
                     'PENDING',
-                    'PAID'
+                    'PAID',
+                    'FAILED'
                 );
             END IF;
             END$$;
