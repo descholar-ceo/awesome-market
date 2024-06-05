@@ -92,7 +92,7 @@ export class OrderService {
         });
         await this.mailService.sendEmail({
           fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
-          emailSubject: `Your Order Confirmation - ${createdOrder.code}`,
+          emailSubject: `[Action Required]: Your Order Confirmation - ${createdOrder.code}`,
           emailHtmlBody: html,
           emailTextBody: text,
           personalizations: [{ to: { email: createdOrder.buyer.email } }],
