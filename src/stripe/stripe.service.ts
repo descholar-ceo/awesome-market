@@ -17,6 +17,7 @@ import { PRODUCTION } from '@/common/constants.common';
 import { orderStatuses, paymentStatuses } from '@/order/order.constants';
 import { MailService } from '@/mail/mail.service';
 import { prepareOrderSuccessPaymentEmailBody } from '@/order/order.utils';
+import { Order } from '@/order/entities/order.entity';
 
 @Injectable()
 export class StripeService {
@@ -125,54 +126,42 @@ export class StripeService {
     session: Stripe.Checkout.Session,
     res: Response,
   ) {
-    const match = session.success_url.match(UUID_REGEX_FROM_ORDERS_URL);
-    if (!!match?.length) {
-      const orderId = match[1];
-      const order = (await this.orderService.findById(orderId))?.data;
-      if (!order) {
-        return res
-          .status(statusCodes.NOT_FOUND)
-          .send(`${statusNames.NOT_FOUND}: Order not found!`);
+    const orderId = this.extractOrderId(session.success_url);
+    if (!orderId) {
+      return this.handleError(
+        res,
+        statusCodes.BAD_REQUEST,
+        `${statusNames.BAD_REQUEST}: Missing order id from the success url`,
+        'There was no order id from the success url sent from stripe',
+      );
+    }
+
+    const order = await this.findOrderById(orderId, res);
+    if (!order) return;
+
+    try {
+      const updatedOrder = await this.orderService.update(
+        orderId,
+        {
+          status: orderStatuses.PROCESSING,
+          paymentStatus: paymentStatuses.PAID,
+        },
+        order.buyer,
+      );
+
+      if (!!updatedOrder) {
+        const { html, text } = prepareOrderSuccessPaymentEmailBody({ order });
+        await this.mailService.sendEmail({
+          fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+          personalizations: [{ to: { email: order.buyer.email } }],
+          emailSubject: `Your Payment Was Successful! Order - #${order.code} Now Processing`,
+          emailHtmlBody: html,
+          emailTextBody: text,
+        });
+        return res.status(statusCodes.OK).send(statusNames.OK);
       }
-      try {
-        const updatedOrder = await this.orderService.update(
-          orderId,
-          {
-            status: orderStatuses.PROCESSING,
-            paymentStatus: paymentStatuses.PAID,
-          },
-          order.buyer,
-        );
-        if (!!updatedOrder) {
-          const { html, text } = prepareOrderSuccessPaymentEmailBody({ order });
-          await this.mailService.sendEmail({
-            fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
-            personalizations: [{ to: { email: order.buyer.email } }],
-            emailSubject: `Your Payment Was Successful! Order - #${order.code} Now Processing`,
-            emailHtmlBody: html,
-            emailTextBody: text,
-          });
-          return res.status(statusCodes.OK).send(statusNames.OK);
-        }
-      } catch (err) {
-        if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-          Logger.error(err);
-        }
-      }
-      return res
-        .status(statusCodes.INTERNAL_SERVER_ERROR)
-        .send(statusNames.INTERNAL_SERVER_ERROR);
-    } else {
-      if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-        Logger.error(
-          'There was no order id from the success url sent from stripe',
-        );
-      }
-      return res
-        .status(statusCodes.BAD_REQUEST)
-        .send(
-          `${statusNames.BAD_REQUEST}: Missing order id from the success url`,
-        );
+    } catch (err) {
+      this.handleInternalError(err, res);
     }
   }
 
@@ -180,44 +169,67 @@ export class StripeService {
     session: Stripe.Checkout.Session,
     res: Response,
   ) {
-    console.log('Checkout Session Completed: ', session);
-    const match = session.success_url.match(UUID_REGEX_FROM_ORDERS_URL);
-    if (!!match?.length) {
-      const orderId = match[1];
-      const order = (await this.orderService.findById(orderId))?.data;
-      if (!order) {
-        return res
-          .status(statusCodes.NOT_FOUND)
-          .send(`${statusNames.NOT_FOUND}: Order not found!`);
-      }
-      try {
-        await this.orderService.update(
-          orderId,
-          {
-            paymentStatus: paymentStatuses.FAILED,
-          },
-          order.buyer,
-        );
-        return res.status(statusCodes.OK).send(statusNames.OK);
-      } catch (err) {
-        if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-          Logger.error(err);
-        }
-      }
-      return res
-        .status(statusCodes.INTERNAL_SERVER_ERROR)
-        .send(statusNames.INTERNAL_SERVER_ERROR);
-    } else {
-      if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-        Logger.error(
-          'There was no order id from the success url sent from stripe',
-        );
-      }
-      return res
-        .status(statusCodes.BAD_REQUEST)
-        .send(
-          `${statusNames.BAD_REQUEST}: Missing order id from the success url`,
-        );
+    const orderId = this.extractOrderId(session.cancel_url);
+    if (!orderId) {
+      return this.handleError(
+        res,
+        statusCodes.BAD_REQUEST,
+        `${statusNames.BAD_REQUEST}: Missing order id from the cancel url`,
+        'There was no order id from the cancel url sent from stripe',
+      );
     }
+
+    const order = await this.findOrderById(orderId, res);
+    if (!order) return;
+
+    try {
+      await this.orderService.update(
+        orderId,
+        { paymentStatus: paymentStatuses.FAILED },
+        order.buyer,
+      );
+      return res.status(statusCodes.OK).send(statusNames.OK);
+    } catch (err) {
+      this.handleInternalError(err, res);
+    }
+  }
+
+  private extractOrderId(url: string): string | null {
+    const match = url.match(UUID_REGEX_FROM_ORDERS_URL);
+    return match?.length ? match[1] : null;
+  }
+
+  private async findOrderById(
+    orderId: string,
+    res: Response,
+  ): Promise<Order | null> {
+    const order = (await this.orderService.findById(orderId))?.data;
+    if (!order) {
+      res
+        .status(statusCodes.NOT_FOUND)
+        .send(`${statusNames.NOT_FOUND}: Order not found!`);
+    }
+    return order;
+  }
+
+  private handleError(
+    res: Response,
+    statusCode: number,
+    message: string,
+    logMessage?: string,
+  ) {
+    if (this.config.get<string>(NODE_ENV) !== PRODUCTION && logMessage) {
+      Logger.error(logMessage);
+    }
+    return res.status(statusCode).send(message);
+  }
+
+  private handleInternalError(err: any, res: Response) {
+    if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+      Logger.error(err);
+    }
+    return res
+      .status(statusCodes.INTERNAL_SERVER_ERROR)
+      .send(statusNames.INTERNAL_SERVER_ERROR);
   }
 }
