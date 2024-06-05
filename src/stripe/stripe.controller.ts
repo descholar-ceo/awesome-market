@@ -1,8 +1,18 @@
 import { statusCodes } from '@/common/utils/status.utils';
 import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
-import { Controller, Get, Param, Query, Res, UsePipes } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Headers,
+  Param,
+  Post,
+  Query,
+  Req,
+  Res,
+  UsePipes,
+} from '@nestjs/common';
+import { Request, Response } from 'express';
 import { StripeService } from './stripe.service';
-import { Response } from 'express';
 
 @Controller('orders')
 export class StripeController {
@@ -29,5 +39,18 @@ export class StripeController {
   @Get(':id/success')
   handleSuccessfulStripePayment() {
     return this.stripeService.handleSuccessfulStripePayment();
+  }
+
+  @Post('checkout/webhook')
+  async handleStripeWebhook(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Headers('stripe-signature') stripeSignature: string,
+  ) {
+    return await this.stripeService.handleStripeWebhook(
+      stripeSignature,
+      req['rawBody'],
+      res,
+    );
   }
 }

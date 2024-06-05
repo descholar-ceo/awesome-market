@@ -1,11 +1,15 @@
 import { ConfigService } from '@/config/config.service';
-import { STRIPE_SECRET_KEY } from '@/config/config.utils';
+import {
+  STRIPE_SECRET_KEY,
+  STRIPE_WEBHOOK_SECRET,
+} from '@/config/config.utils';
 import { OrderService } from '@/order/order.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import Stripe from 'stripe';
 import { StripProductLineDto } from './stripe.dto';
 import { CommonResponseDto } from '@/common/common.dtos';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
+import { Response } from 'express';
 
 @Injectable()
 export class StripeService {
@@ -23,7 +27,7 @@ export class StripeService {
     orderId: string,
     successUrl: string,
     cancelUrl: string,
-  ) {
+  ): Promise<Stripe.Checkout.Session> {
     const order = (await this.orderService.findById(orderId))?.data;
     if (!order) {
       throw new NotFoundException('Order not found');
@@ -60,12 +64,58 @@ export class StripeService {
   }
 
   async handleSuccessfulStripePayment(): Promise<CommonResponseDto> {
-    console.log('===>payment success');
-    return { status: statusCodes.OK, message: statusNames.OK };
+    return {
+      status: statusCodes.OK,
+      message: `${statusNames.OK}: We will communicate further steps via your email`,
+    };
   }
 
   async handleCancelledStripePayment(): Promise<CommonResponseDto> {
-    console.log('===>payment failed');
-    return { status: statusCodes.OK, message: statusNames.OK };
+    return {
+      status: statusCodes.OK,
+      message: `${statusNames.OK}: We will communicate further steps via your email`,
+    };
+  }
+
+  async handleStripeWebhook(
+    signature: any,
+    body: Buffer,
+    res: Response,
+  ): Promise<Response> {
+    const endpointSecret = this.config.get<string>(STRIPE_WEBHOOK_SECRET);
+    let event: Stripe.Event;
+    try {
+      event = this.constructEvent(body, signature, endpointSecret);
+    } catch (err) {
+      Logger.error(`Webhook signature verification failed.`, err.message);
+      return res
+        .status(statusCodes.BAD_REQUEST)
+        .send(`Webhook Error: ${err.message}`);
+    }
+
+    switch (event.type) {
+      case 'checkout.session.completed':
+        const session = event.data.object as Stripe.Checkout.Session;
+        await this.handleCheckoutSessionCompleted(session, res);
+        break;
+      default:
+        Logger.error(`Unhandled event type ${event.type}`);
+    }
+  }
+  private constructEvent(
+    payload: Buffer,
+    sig: string | string[],
+    secret: string,
+  ): Stripe.Event {
+    return this.stripe.webhooks.constructEvent(payload, sig, secret);
+  }
+
+  private async handleCheckoutSessionCompleted(
+    session: Stripe.Checkout.Session,
+    res: Response,
+  ) {
+    console.log('Checkout Session Completed: ', session);
+    console.log('===>session: ', session.success_url);
+    return res.status(statusCodes.OK).send(statusNames.OK);
   }
 }
