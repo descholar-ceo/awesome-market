@@ -222,7 +222,7 @@ export const prepareAccountApprovedMessageBody = (
 };
 
 export const isUserAdmin = (user: User): boolean => {
-  return user.roles.some((currRole) => {
+  return user.roles?.some((currRole) => {
     if (typeof currRole === 'string') {
       return currRole === ADMIN_ROLE_NAME;
     }

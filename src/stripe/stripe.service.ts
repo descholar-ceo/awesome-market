@@ -1,5 +1,6 @@
 import { ConfigService } from '@/config/config.service';
 import {
+  NODE_ENV,
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
 } from '@/config/config.utils';
@@ -10,6 +11,9 @@ import { StripProductLineDto } from './stripe.dto';
 import { CommonResponseDto } from '@/common/common.dtos';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
 import { Response } from 'express';
+import { UUID_REGEX_FROM_ORDERS_URL } from '@/common/utils/regex.utils';
+import { PRODUCTION } from '@/common/constants.common';
+import { orderStatuses, paymentStatuses } from '@/order/order.constants';
 
 @Injectable()
 export class StripeService {
@@ -66,7 +70,7 @@ export class StripeService {
   async handleSuccessfulStripePayment(): Promise<CommonResponseDto> {
     return {
       status: statusCodes.OK,
-      message: `${statusNames.OK}: We will communicate further steps via your email`,
+      message: `${statusNames.OK}: Payment success received, check your email for your order status updates. Thank you for shopping with us!`,
     };
   }
 
@@ -115,7 +119,44 @@ export class StripeService {
     res: Response,
   ) {
     console.log('Checkout Session Completed: ', session);
-    console.log('===>session: ', session.success_url);
-    return res.status(statusCodes.OK).send(statusNames.OK);
+    const match = session.success_url.match(UUID_REGEX_FROM_ORDERS_URL);
+    if (!!match?.length) {
+      const orderId = match[1];
+      const order = (await this.orderService.findById(orderId))?.data;
+      if (!order) {
+        return res
+          .status(statusCodes.NOT_FOUND)
+          .send(`${statusNames.NOT_FOUND}: Order not found!`);
+      }
+      try {
+        await this.orderService.update(
+          orderId,
+          {
+            status: orderStatuses.PROCESSING,
+            paymentStatus: paymentStatuses.PAID,
+          },
+          order.buyer,
+        );
+        return res.status(statusCodes.OK).send(statusNames.OK);
+      } catch (err) {
+        if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+          Logger.error(err);
+        }
+      }
+      return res
+        .status(statusCodes.INTERNAL_SERVER_ERROR)
+        .send(statusNames.INTERNAL_SERVER_ERROR);
+    } else {
+      if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+        Logger.error(
+          'There was no order id from the success url sent from stripe',
+        );
+      }
+      return res
+        .status(statusCodes.BAD_REQUEST)
+        .send(
+          `${statusNames.BAD_REQUEST}: Missing order id from the success url`,
+        );
+    }
   }
 }
