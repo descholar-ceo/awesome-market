@@ -5,6 +5,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { DEVELOPMENT } from './common/constants.common';
 import * as morgan from 'morgan';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as bodyParser from 'body-parser';
 
 config();
 
@@ -12,7 +13,15 @@ async function bootstrap() {
   const {
     env: { PORT, NODE_ENV },
   } = process;
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+  const rawBodyBuffer = (req, res, buf, encoding) => {
+    if (buf && buf.length) {
+      req.rawBody = buf.toString(encoding || 'utf8');
+    }
+  };
+
+  app.use(bodyParser.urlencoded({ verify: rawBodyBuffer, extended: true }));
+  app.use(bodyParser.json({ verify: rawBodyBuffer }));
   app.use(morgan('short'));
   const config = new DocumentBuilder()
     .setTitle('Awesome Market')
