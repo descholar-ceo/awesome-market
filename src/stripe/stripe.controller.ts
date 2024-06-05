@@ -23,14 +23,26 @@ export class StripeController {
     @Param('id') id: string,
     @Query('success-url') successUrl: string,
     @Query('cancel-url') cancelUrl: string,
+    @Query('token') token: string,
     @Res() res: Response,
   ) {
     const session = await this.stripeService.createCheckoutSession(
       id,
       successUrl,
       cancelUrl,
+      token,
     );
-    return res.redirect(statusCodes.SEE_OTHER, session.url);
+    if (!!session['url']) {
+      return res.redirect(statusCodes.SEE_OTHER, session['url']);
+    } else {
+      return res
+        .status(
+          isNaN(Number(session.status))
+            ? statusCodes.INTERNAL_SERVER_ERROR
+            : Number(session.status),
+        )
+        .send(session['message']);
+    }
   }
   @Get(':id/cancel')
   handleCancelledStripePayment() {
