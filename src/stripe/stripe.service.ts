@@ -6,7 +6,14 @@ import {
   STRIPE_WEBHOOK_SECRET,
 } from '@/config/config.utils';
 import { OrderService } from '@/order/order.service';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import Stripe from 'stripe';
 import { StripProductLineDto } from './stripe.dto';
 import { CommonResponseDto } from '@/common/common.dtos';
@@ -18,6 +25,8 @@ import { orderStatuses, paymentStatuses } from '@/order/order.constants';
 import { MailService } from '@/mail/mail.service';
 import { prepareOrderSuccessPaymentEmailBody } from '@/order/order.utils';
 import { Order } from '@/order/entities/order.entity';
+import { decodeToken } from '@/common/utils/token.utils';
+import { User } from '@/user/entities/user.entity';
 
 @Injectable()
 export class StripeService {
@@ -36,10 +45,39 @@ export class StripeService {
     orderId: string,
     successUrl: string,
     cancelUrl: string,
-  ): Promise<Stripe.Checkout.Session> {
+    token: string,
+  ): Promise<Stripe.Checkout.Session | CommonResponseDto> {
+    if (!token) {
+      return {
+        status: statusCodes.UNAUTHORIZED,
+        message: statusNames.UNAUTHORIZED,
+      };
+    }
+    let user: User;
+    try {
+      user = decodeToken(token);
+      if (!user) {
+        throw new UnauthorizedException(
+          "token is invalid, we couldn't process your payment",
+        );
+      }
+    } catch (err) {
+      if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+        Logger.error(err);
+      }
+      throw new UnauthorizedException(
+        "token is invalid, we couldn't process your payment",
+      );
+    }
     const order = (await this.orderService.findById(orderId))?.data;
     if (!order) {
       throw new NotFoundException('Order not found');
+    }
+    if (order.buyer.id !== user.id) {
+      throw new ForbiddenException('Order seems to be not yours!');
+    }
+    if (order.paymentStatus === paymentStatuses.PAID) {
+      throw new ConflictException('You have already paid for this order');
     }
     const products: StripProductLineDto[] = order.orderItems.map(
       (currItem) => ({
