@@ -72,7 +72,7 @@ export const prepareOrderPendingNotificationEmailBody = async (
             : ''
         }
         <ol>
-          <li><strong>Payment: </strong>Please complete your payment by clicking on this <a href="${apiUrl}/orders/${orderId}/checkout?success-url=${apiUrl}/orders/${orderId}/success&cancel-url=${apiUrl}/orders/${orderId}/cancel&token=${buyerToken}">link</a><em style="text-decoration:underline;"> Please Note that the link will expire in ${linkExpirationTime}</em></li>
+          <li><strong>Payment: </strong>Please complete your payment by clicking on this <a href="${apiUrl}/orders/${orderId}/checkout?success-url=${apiUrl}/orders/${orderId}/success&cancel-url=${apiUrl}/orders/${orderId}/cancel&token=${buyerToken}">link</a><em> Please Note that the link will expire in ${linkExpirationTime}</em></li>
           <li><strong>Processing: </strong>Once we receive your payment, your order will be processed by the respective sellers.</li>
         </ol>
         <p>
@@ -199,7 +199,7 @@ export const prepareOrderSuccessPaymentEmailBody = (
             <li><strong>Processing: </strong>Your order is now being processed by the respective sellers. We will notify you once your order is ready for shipping.</li>
           </ol>
           <p>
-            <strong>Contact the Seller:</strong> If you have any questions about your order, you can contact the sellers through our platform's messaging system.
+            If you have any questions about your order, you can contact the sellers through our platform's messaging system.
           </p>
           <p>
               If you need further assistance, feel free to reply to this email.
