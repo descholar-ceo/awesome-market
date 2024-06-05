@@ -1,3 +1,4 @@
+import { UUID_REGEX } from '@/common/utils/regex.utils';
 import {
   ArgumentMetadata,
   BadRequestException,
@@ -9,10 +10,7 @@ import {
 export class ValidateUuidPipe implements PipeTransform {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async transform(value: string, metadata: ArgumentMetadata): Promise<string> {
-    const uuidPattern =
-      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-
-    if (!value?.match(uuidPattern)) {
+    if (!value?.match(UUID_REGEX)) {
       throw new BadRequestException('Invalid UUID');
     }
     return value;

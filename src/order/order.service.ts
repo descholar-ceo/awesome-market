@@ -9,6 +9,7 @@ import { OrderItemService } from '@/order-item/order-item.service';
 import { User } from '@/user/entities/user.entity';
 import { UserService } from '@/user/user.service';
 import {
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -25,6 +26,8 @@ import {
 } from './dto/find-order.dto';
 import { Order } from './entities/order.entity';
 import { prepareOrderPendingNotificationEmailBody } from './order.utils';
+import { UpdateOrderDto } from './dto/update-order.dto';
+import { isUserAdmin } from '@/user/user.utils';
 
 @Injectable()
 export class OrderService {
@@ -188,13 +191,15 @@ export class OrderService {
       where: { id },
       relations: [
         'buyer',
+        'buyer.roles',
+        'orderItems',
         'orderItems.inventory.product',
         'orderItems.inventory.owner',
       ],
     });
 
     if (!order) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+      throw new NotFoundException(`Order with ID ${id} not found`);
     }
 
     return {
@@ -204,6 +209,42 @@ export class OrderService {
         excludeExtraneousValues: true,
       }),
     };
+  }
+
+  async update(
+    id: string,
+    updateOrderData: UpdateOrderDto,
+    currUser: User,
+  ): Promise<OrderResponseDto> {
+    const order = (await this.findById(id))?.data;
+    if (!order) {
+      throw new NotFoundException(`Category with ID ${id} not found`);
+    }
+    if (
+      !isUserAdmin(currUser) &&
+      order.buyer?.id !== currUser.id &&
+      order.orderItems?.some(
+        (currItem) => currItem.inventory.owner.id !== currUser.id,
+      )
+    ) {
+      throw new ForbiddenException('You are not allowed to update this order');
+    }
+    order.updatedBy = currUser;
+    Object.assign(order, updateOrderData);
+    const updatedOrder = await this.orderRepository.save(order);
+
+    if (!!updatedOrder) {
+      return {
+        status: statusCodes.OK,
+        message: statusNames.OK,
+        data: updatedOrder,
+      };
+    } else {
+      return {
+        status: statusCodes.INTERNAL_SERVER_ERROR,
+        message: statusNames.INTERNAL_SERVER_ERROR,
+      };
+    }
   }
 
   private buildFindProductsQuery(
