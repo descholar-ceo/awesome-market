@@ -1,5 +1,6 @@
 import { ConfigService } from '@/config/config.service';
 import {
+  APP_MAILING_ADDRESS,
   NODE_ENV,
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
@@ -14,6 +15,8 @@ import { Response } from 'express';
 import { UUID_REGEX_FROM_ORDERS_URL } from '@/common/utils/regex.utils';
 import { PRODUCTION } from '@/common/constants.common';
 import { orderStatuses, paymentStatuses } from '@/order/order.constants';
+import { MailService } from '@/mail/mail.service';
+import { prepareOrderSuccessPaymentEmailBody } from '@/order/order.utils';
 
 @Injectable()
 export class StripeService {
@@ -21,6 +24,7 @@ export class StripeService {
   constructor(
     private readonly config: ConfigService,
     private readonly orderService: OrderService,
+    private readonly mailService: MailService,
   ) {
     this.stripe = new Stripe(this.config.get<string>(STRIPE_SECRET_KEY), {
       apiVersion: '2024-04-10',
@@ -131,7 +135,7 @@ export class StripeService {
           .send(`${statusNames.NOT_FOUND}: Order not found!`);
       }
       try {
-        await this.orderService.update(
+        const updatedOrder = await this.orderService.update(
           orderId,
           {
             status: orderStatuses.PROCESSING,
@@ -139,7 +143,17 @@ export class StripeService {
           },
           order.buyer,
         );
-        return res.status(statusCodes.OK).send(statusNames.OK);
+        if (!!updatedOrder) {
+          const { html, text } = prepareOrderSuccessPaymentEmailBody({ order });
+          await this.mailService.sendEmail({
+            fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+            personalizations: [{ to: { email: order.buyer.email } }],
+            emailSubject: `Your Payment Was Successful! Order - #${order.code} Now Processing`,
+            emailHtmlBody: html,
+            emailTextBody: text,
+          });
+          return res.status(statusCodes.OK).send(statusNames.OK);
+        }
       } catch (err) {
         if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
           Logger.error(err);
