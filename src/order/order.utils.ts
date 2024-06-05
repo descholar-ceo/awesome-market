@@ -68,7 +68,7 @@ export const prepareOrderPendingNotificationEmailBody = async (
                   Shipping Address:
                 </h3>
                 <p>${shippingAddress}</p>
-                <h3>Next Steps:</h4>`
+                <h3>Next Steps:</h3>`
             : ''
         }
         <ol>
@@ -192,7 +192,7 @@ export const prepareOrderSuccessPaymentEmailBody = (
                     Shipping Address:
                   </h3>
                   <p>${shippingAddress}</p>
-                  <h3>Next Steps:</h4>`
+                  <h3>Next Steps:</h3>`
               : ''
           }
           <ol>
