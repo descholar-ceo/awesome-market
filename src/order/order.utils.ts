@@ -24,7 +24,7 @@ export const prepareOrderPendingNotificationEmailBody = async (
     },
     apiUrl,
   } = data;
-  const buyerToken = await generateTokens(buyer, 'otherTokens');
+  const { otherToken: buyerToken } = await generateTokens(buyer, 'otherTokens');
   const linkExpirationTime = getEnvironmentValue<string>(
     validateEnvironment(dotenvConfig),
     GENERAL_JWT_EXPIRES,
