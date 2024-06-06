@@ -43,7 +43,7 @@ export class InitService {
   }
 
   private async createOrFindUser(email: string, roles: Role[]): Promise<User> {
-    const user = (await this.userService.find({ email }))?.[0];
+    const user = (await this.userService.findOneByEmail(email))?.data;
     if (!user) {
       if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
         Logger.debug(`The initial ${email} does not exist, creating it...`);
