@@ -14,14 +14,14 @@ export enum statusCodes {
 }
 
 export enum statusNames {
-  OK = 'OK',
-  PERMANENTLY_MOVED = 'PERMANENTLY_MOVED',
-  BAD_REQUEST = 'BAD_REQUEST',
-  UNAUTHORIZED = 'UNAUTHORIZED',
-  CONFLICT = 'CONFLICT',
-  INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
-  NOT_FOUND = 'NOT_FOUND',
-  FORBIDDEN = 'FORBIDDEN',
-  CREATED = 'CREATED',
-  SEE_OTHER = 'SEE_OTHER',
+  OK = 'Ok',
+  PERMANENTLY_MOVED = 'Permanently Moved',
+  BAD_REQUEST = 'Bad Request',
+  UNAUTHORIZED = 'Unauthorized',
+  CONFLICT = 'Conflict',
+  INTERNAL_SERVER_ERROR = 'Internal Server Error',
+  NOT_FOUND = 'Not Found',
+  FORBIDDEN = 'Forbidden',
+  CREATED = 'Created',
+  SEE_OTHER = 'See Other',
 }
