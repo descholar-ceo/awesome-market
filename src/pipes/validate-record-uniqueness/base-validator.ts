@@ -1,10 +1,21 @@
 import { CreateCategoryDto } from '@/category/dto/create-category.dto';
 import { UpdateCategoryDto } from '@/category/dto/update-category.dto';
+import { CreateRoleDto } from '@/role/dto/create-role.dto';
+import { UpdateRoleDto } from '@/role/dto/update-role.dto';
+import { CreateUserDto } from '@/user/dto/create-user.dto';
+import { UpdateUserDto } from '@/user/dto/update-user.dto';
 import { ConflictException } from '@nestjs/common';
 
 export class BaseValidator {
   toValidate(metaType: any): boolean {
-    const typesToValidate = [CreateCategoryDto, UpdateCategoryDto];
+    const typesToValidate = [
+      CreateCategoryDto,
+      UpdateCategoryDto,
+      CreateUserDto,
+      UpdateUserDto,
+      CreateRoleDto,
+      UpdateRoleDto,
+    ];
     return typesToValidate.includes(metaType);
   }
 

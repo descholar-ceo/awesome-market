@@ -26,7 +26,7 @@ import {
   FindCategoryFiltersDto,
 } from './dto/find-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { ValidateUniqueCategoryPipe } from '@/pipes/validate-record-uniqueness/validate-unique-category.pipe';
+import { ValidateUniqueCategoryPipe } from '@/pipes/validate-record-uniqueness/validate-unique-category/validate-unique-category.pipe';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('categories')

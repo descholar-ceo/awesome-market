@@ -1,19 +1,19 @@
-import { CategoryService } from '@/category/category.service';
-import { CreateCategoryDto } from '@/category/dto/create-category.dto';
-import { UpdateCategoryDto } from '@/category/dto/update-category.dto';
 import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
-import { BaseValidator } from './base-validator';
+import { BaseValidator } from '../base-validator';
+import { RoleService } from '@/role/role.service';
+import { UpdateRoleDto } from '@/role/dto/update-role.dto';
+import { CreateRoleDto } from '@/role/dto/create-role.dto';
 
 @Injectable()
-export class ValidateUniqueCategoryPipe
+export class ValidateUniqueRolePipe
   extends BaseValidator
   implements PipeTransform
 {
-  constructor(private readonly categoryService: CategoryService) {
+  constructor(private readonly categoryService: RoleService) {
     super();
   }
   async transform(
-    value: CreateCategoryDto | UpdateCategoryDto,
+    value: CreateRoleDto | UpdateRoleDto,
     metadata: ArgumentMetadata,
   ) {
     const { metatype } = metadata;
@@ -25,7 +25,7 @@ export class ValidateUniqueCategoryPipe
       service: this.categoryService,
       uniqueFieldName: 'name',
       findMethodName: 'findOneByName',
-      entityName: 'Category',
+      entityName: 'Role',
     });
     return value;
   }
