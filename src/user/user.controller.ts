@@ -45,16 +45,11 @@ export class UserController {
     return await this.userService.approveSellerAccount(sellerId);
   }
 
-  @Get()
-  findAll() {
-    return this.userService.findAll();
-  }
-
-  @Get(':id')
-  @UsePipes(new ValidateUuidPipe())
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(id);
-  }
+  // @Get(':id')
+  // @UsePipes(new ValidateUuidPipe())
+  // findOne(@Param('id') id: string) {
+  //   return this.userService.findOne(id);
+  // }
 
   @Patch(':id')
   @UsePipes(new ValidateIdFromParam())

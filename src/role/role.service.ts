@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOneOptions, QueryRunner, Repository } from 'typeorm';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { Role } from './entities/role.entity';
+import { plainToInstance } from 'class-transformer';
+import { statusCodes, statusNames } from '@/common/utils/status.utils';
+import { RoleResponseDto } from './dto/find-role.dto';
 
 @Injectable()
 export class RoleService {
@@ -17,6 +20,12 @@ export class RoleService {
     return await this.roleRepository.save(newRole);
   }
 
+  async findOneByName(
+    name: string,
+    queryRunner?: QueryRunner,
+  ): Promise<RoleResponseDto> {
+    return await this.findOneBy({ where: { name } }, queryRunner);
+  }
   async findAll() {
     return await this.roleRepository.find();
   }
@@ -40,5 +49,27 @@ export class RoleService {
 
   async remove(id: string) {
     await this.roleRepository.delete(id);
+  }
+
+  private async findOneBy(
+    whereCondition: FindOneOptions<Role>,
+    queryRunner?: QueryRunner,
+  ): Promise<RoleResponseDto> {
+    let role: Role;
+    if (!!queryRunner) {
+      role = await queryRunner.manager.findOne(Role, whereCondition);
+    } else {
+      role = await this.roleRepository.findOne(whereCondition);
+    }
+    if (!role) {
+      return { status: statusCodes.NOT_FOUND, message: statusNames.NOT_FOUND };
+    }
+    return {
+      status: statusCodes.OK,
+      message: statusNames.OK,
+      data: plainToInstance(Role, role, {
+        excludeExtraneousValues: true,
+      }),
+    };
   }
 }

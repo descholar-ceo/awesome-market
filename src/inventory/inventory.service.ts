@@ -46,7 +46,7 @@ export class InventoryService {
     } else {
       inventory = await this.inventoryRepository.create(createInventoryData);
       inventory.product = product;
-      inventory.owner = (await this.userService.findById(currUser.id))?.data;
+      inventory.owner = (await this.userService.findOneById(currUser.id))?.data;
       inventory.updatedBy = currUser;
     }
     const savedInventory = await this.inventoryRepository.save(inventory);

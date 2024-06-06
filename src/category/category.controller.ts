@@ -26,6 +26,7 @@ import {
   FindCategoryFiltersDto,
 } from './dto/find-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { ValidateUniqueCategoryPipe } from '@/pipes/validate-record-uniqueness/validate-unique-category.pipe';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('categories')
@@ -35,7 +36,7 @@ export class CategoryController {
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Post()
   create(
-    @Body() createCategoryDto: CreateCategoryDto,
+    @Body(ValidateUniqueCategoryPipe) createCategoryDto: CreateCategoryDto,
     @CurrentUser() currUser: User,
   ): Promise<CategoryResponseDto> {
     return this.categoryService.create(createCategoryDto, currUser);

@@ -55,8 +55,9 @@ export class OrderService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const buyer = (await this.userService.findById(currUser.id, queryRunner))
-        ?.data;
+      const buyer = (
+        await this.userService.findOneById(currUser.id, queryRunner)
+      )?.data;
       const newOrder = await this.orderRepository.create({
         buyer,
         updatedBy: buyer,

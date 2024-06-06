@@ -17,7 +17,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { plainToInstance } from 'class-transformer';
-import { DeleteResult, QueryRunner, Repository } from 'typeorm';
+import { DeleteResult, FindOneOptions, QueryRunner, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserResponseDto } from './dto/find-product.dto';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
@@ -70,8 +70,10 @@ export class UserService {
         ?.includes(sellerRoleName)
     ) {
       const adminUser = (
-        await this.find({ email: this.config.get<string>(INITIAL_ADMIN_EMAIL) })
-      )?.[0];
+        await this.findOneBy({
+          where: { email: this.config.get<string>(INITIAL_ADMIN_EMAIL) },
+        })
+      )?.data;
       if (!!adminUser?.email) {
         try {
           const approvalUrl = `${this.config.get<string>(API_URL)}/users/approve-seller-account?seller-id=${savedUser.id}`;
@@ -181,7 +183,8 @@ export class UserService {
         message: 'Seller Id is required',
       };
     }
-    const sellerUser = (await this.find({ id: sellerId }))?.[0];
+    const sellerUser = (await this.findOneBy({ where: { id: sellerId } }))
+      ?.data;
     if (!sellerUser) {
       return {
         status: statusCodes.NOT_FOUND,
@@ -225,42 +228,28 @@ export class UserService {
     };
   }
 
-  async findById(
+  async findOneById(
     id: string,
     queryRunner?: QueryRunner,
   ): Promise<UserResponseDto> {
-    const findCondition = {
-      where: { id },
-      relations: ['inventories', 'orders'],
-    };
-    let user: User;
-    if (!!queryRunner) {
-      user = await queryRunner.manager.findOne(User, findCondition);
-    } else {
-      user = await this.userRepository.findOne(findCondition);
-    }
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-    return {
-      status: statusCodes.OK,
-      message: statusNames.OK,
-      data: plainToInstance(User, user, {
-        excludeExtraneousValues: true,
-      }),
-    };
+    return await this.findOneBy(
+      { where: { id }, relations: ['inventories', 'orders'] },
+      queryRunner,
+    );
   }
 
-  async findAll() {
-    return await this.userRepository.find();
+  async findOneByEmail(
+    email: string,
+    queryRunner?: QueryRunner,
+  ): Promise<UserResponseDto> {
+    return await this.findOneBy({ where: { email } }, queryRunner);
   }
 
-  async find(where: Record<string, any>) {
-    return await this.userRepository.find({ where });
-  }
-
-  async findOne(id: string) {
-    return await this.userRepository.findBy({ id });
+  async findOneByPhoneNumber(
+    phoneNumber: string,
+    queryRunner?: QueryRunner,
+  ): Promise<UserResponseDto> {
+    return await this.findOneBy({ where: { phoneNumber } }, queryRunner);
   }
 
   async update(id: string, updateUserData: UpdateUserDto) {
@@ -280,6 +269,28 @@ export class UserService {
     return {
       status: statusCodes.INTERNAL_SERVER_ERROR,
       message: 'Something went wrong, try again',
+    };
+  }
+
+  private async findOneBy(
+    whereCondition: FindOneOptions<User>,
+    queryRunner?: QueryRunner,
+  ): Promise<UserResponseDto> {
+    let user: User;
+    if (!!queryRunner) {
+      user = await queryRunner.manager.findOne(User, whereCondition);
+    } else {
+      user = await this.userRepository.findOne(whereCondition);
+    }
+    if (!user) {
+      return { status: statusCodes.NOT_FOUND, message: statusNames.NOT_FOUND };
+    }
+    return {
+      status: statusCodes.OK,
+      message: statusNames.OK,
+      data: plainToInstance(User, user, {
+        excludeExtraneousValues: true,
+      }),
     };
   }
 }

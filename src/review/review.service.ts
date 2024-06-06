@@ -34,7 +34,7 @@ export class ReviewService {
     if (!product) throw new NotFoundException('Product not found');
     const review = await this.reviewRepository.create(createReviewData);
     review.product = product;
-    review.ratedBy = (await this.userService.findById(currUser.id))?.data;
+    review.ratedBy = (await this.userService.findOneById(currUser.id))?.data;
     review.updatedBy = currUser;
 
     const savedReview = await this.reviewRepository.save(review);

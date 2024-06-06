@@ -10,7 +10,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { DeleteResult, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  DeleteResult,
+  FindOneOptions,
+  QueryRunner,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { isUserAdmin } from './../user/user.utils';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import {
@@ -43,6 +49,13 @@ export class CategoryService {
       message: statusNames.CREATED,
       data: category,
     };
+  }
+
+  async findOneByName(
+    name: string,
+    queryRunner?: QueryRunner,
+  ): Promise<CategoryResponseDto> {
+    return await this.findOneBy({ where: { name } }, queryRunner);
   }
 
   async findWithFilters(
@@ -174,6 +187,28 @@ export class CategoryService {
     }
 
     return { status: statusCodes.OK, message: statusNames.OK };
+  }
+
+  private async findOneBy(
+    whereCondition: FindOneOptions<Category>,
+    queryRunner?: QueryRunner,
+  ): Promise<CategoryResponseDto> {
+    let category: Category;
+    if (!!queryRunner) {
+      category = await queryRunner.manager.findOne(Category, whereCondition);
+    } else {
+      category = await this.categoryRepository.findOne(whereCondition);
+    }
+    if (!category) {
+      return { status: statusCodes.NOT_FOUND, message: statusNames.NOT_FOUND };
+    }
+    return {
+      status: statusCodes.OK,
+      message: statusNames.OK,
+      data: plainToInstance(Category, category, {
+        excludeExtraneousValues: true,
+      }),
+    };
   }
 
   private buildFindCategoriesQuery(
