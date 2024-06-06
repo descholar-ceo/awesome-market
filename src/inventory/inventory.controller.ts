@@ -84,6 +84,6 @@ export class InventoryController {
   @Get(':id')
   @UsePipes(new ValidateUuidPipe())
   findById(@Param('id') id: string): Promise<InventoryResponseDto> {
-    return this.inventoryService.findById(id);
+    return this.inventoryService.findOneById(id);
   }
 }

@@ -3,6 +3,7 @@ import { Inventory } from '@/inventory/entities/inventory.entity';
 import { Order } from '@/order/entities/order.entity';
 import { Product } from '@/product/entities/product.entity';
 import { Role } from '@/role/entities/role.entity';
+import { ADMIN_ROLE_NAME, BUYER_ROLE_NAME } from '@/role/role.constants';
 import * as bcrypt from 'bcryptjs';
 import { Exclude, Expose } from 'class-transformer';
 import {
@@ -15,6 +16,7 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
+import { DEFAULT_SHIPPING_ADDRESS_VALUE } from '../user.constants';
 
 @Entity()
 export class User {
@@ -97,9 +99,18 @@ export class User {
   orders: Order[];
 
   @BeforeInsert()
-  generateUniqId() {
+  initializeUser() {
     this.id = uuidV4();
     const passedPassword = this.password;
     this.password = bcrypt.hashSync(passedPassword, 10);
+    if (
+      this.roles.some(
+        (currRole) =>
+          currRole.name === ADMIN_ROLE_NAME ||
+          currRole.name === BUYER_ROLE_NAME,
+      )
+    ) {
+      this.shippingAddress = DEFAULT_SHIPPING_ADDRESS_VALUE;
+    }
   }
 }
