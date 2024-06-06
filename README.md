@@ -109,6 +109,30 @@ In order to make sure that all features work correctly, including live email not
 SENDGRID_API_KEY=your_sendgrid_api_key
 APP_MAILING_ADDRESS=your_whitelisted_email
 ```
+##### Configure Stripe API Key and Webhook
+To enable payment processing with Stripe, follow these steps:
+1. **Sign up for Stripe:** If you don't already have a Stripe account, sign up at [Stripe](https://stripe.com/).
+2. **Obtain API Keys:**
+  - After logging into your Stripe account, navigate to the "Developers" section.
+  - Go to the "API keys" tab. Here you will find your "Publishable key" and "Secret key".
+  - Copy the "Secret key".
+3. **Set Up Webhooks:**
+  - Navigate to the "Webhooks" section under "Developers".
+  - Click on "Add endpoint"
+  - Here you will need a URL that have to look like a live link with `https` scheme, you can use [ngrok](https://ngrok.com/) in order to get it. Run the following command if the dev server is running:
+  ```sh
+  ./ngrok http [THE PORT AT WHICH LOCALHOST IS LISTENING]
+  ```
+  - Copy the URL ngrok is showing, it's something that looks like this: `https://f5cf-41-186-29-129.ngrok-free.app`
+  - Provide the URL where Stripe will send webhook events (e.g., https://f5cf-41-186-29-129.ngrok-free.app/orders/checkout/webhook).
+  - Select the API version we are using in this project which is: `2024-04-10` 
+  - Select these two events `checkout.session.completed`, `checkout.session.async_payment_failed`.
+  - Click on "Add endpoint" and copy the "Signing secret".
+4. **Update .env File:** Add the following variables to your `.env` file with the obtained values:
+```sh
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+```
 #### Migrations
 ##### Creating an empty migration file
 1. Before creating a migration, you need to be using the same node-version specified by the project. To do that, open a terminal, navigate to `awesome-market` directory and run the following command:
