@@ -1,3 +1,4 @@
+import { orderStatuses, paymentStatuses } from './order.constants';
 import { PRODUCTION } from '@/common/constants.common';
 import { getDateInterval } from '@/common/utils/dates.utils';
 import { statusCodes, statusNames } from '@/common/utils/status.utils';
@@ -231,6 +232,22 @@ export class OrderService {
       )
     ) {
       throw new ForbiddenException('You are not allowed to update this order');
+    }
+    if (
+      updateOrderData.status === orderStatuses.SHIPPING &&
+      order.paymentStatus !== paymentStatuses.PAID
+    ) {
+      throw new ForbiddenException(
+        'You cannot ship this order, because it is not paid yet',
+      );
+    }
+    if (
+      updateOrderData.status === orderStatuses.DELIVERED &&
+      order.status !== orderStatuses.SHIPPING
+    ) {
+      throw new ForbiddenException(
+        'You cannot mark this order as DELIVERED, because it was not in SHIPPING status yet',
+      );
     }
     order.updatedBy = currUser;
     Object.assign(order, updateOrderData);
