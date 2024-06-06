@@ -15,7 +15,6 @@ export class ConflictFilter extends BaseExceptionFilter {
     super();
   }
   catch(exception: CustomConflictException, context: ExecutionContext) {
-    console.log('===>exception: ', exception);
     return this.writeToClient(context, exception);
   }
 }
