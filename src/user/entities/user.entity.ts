@@ -108,7 +108,8 @@ export class User {
         (currRole) =>
           currRole.name === ADMIN_ROLE_NAME ||
           currRole.name === BUYER_ROLE_NAME,
-      )
+      ) &&
+      !!DEFAULT_SHIPPING_ADDRESS_VALUE
     ) {
       this.shippingAddress = DEFAULT_SHIPPING_ADDRESS_VALUE;
     }
