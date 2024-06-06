@@ -64,30 +64,6 @@ export class InventoryService {
     queryRunner?: QueryRunner,
   ): Promise<InventoryResponseDto> {
     let inventory: Inventory;
-    const findCondition = { where: { id } };
-    if (!!queryRunner) {
-      inventory = await queryRunner.manager.findOne(Inventory, findCondition);
-    } else {
-      inventory = await this.inventoryRepository.findOne(findCondition);
-    }
-    if (!inventory) {
-      throw new NotFoundException(`Inventory with ID ${id} not found`);
-    }
-
-    return {
-      status: statusCodes.OK,
-      message: statusNames.OK,
-      data: plainToInstance(Inventory, inventory, {
-        excludeExtraneousValues: true,
-      }),
-    };
-  }
-
-  async findByOne(
-    id: string,
-    queryRunner?: QueryRunner,
-  ): Promise<InventoryResponseDto> {
-    let inventory: Inventory;
     const findCondition = {
       where: { id },
       relations: ['owner', 'product', 'orderItems', 'orderItems.order'],
@@ -115,7 +91,7 @@ export class InventoryService {
     updateInventoryData: UpdateInventoryDto,
     currUser: User,
   ): Promise<InventoryResponseDto> {
-    const inventory = (await this.findByOne(id))?.data;
+    const inventory = (await this.findById(id))?.data;
     if (!inventory) {
       throw new NotFoundException(`Inventory with ID ${id} not found`);
     }
@@ -125,16 +101,13 @@ export class InventoryService {
         'You cannot add items to an inventory that you do not own',
       );
     }
-    let affectedRows: number;
     inventory.updatedBy = currUser;
     inventory.quantity += updateInventoryData.quantity;
-    const { affected } = await this.inventoryRepository.update(id, inventory);
-    if (!!affected || !!affectedRows) {
-      return await this.findById(id);
-    }
+    const savedInventory = await this.inventoryRepository.save(inventory);
     return {
-      status: statusCodes.INTERNAL_SERVER_ERROR,
-      message: 'Nothing added',
+      status: statusCodes.OK,
+      message: statusNames.OK,
+      data: savedInventory,
     };
   }
 
@@ -155,24 +128,16 @@ export class InventoryService {
     Object.assign(inventory, {
       quantity: inventory.quantity - updateInventoryData.quantity,
     });
-    let affectedRows: number;
+    let savedInventory: Inventory;
     if (!!queryRunner) {
-      const { affected } = await queryRunner.manager.update(
-        Inventory,
-        { id: inventory.id },
-        inventory,
-      );
-      affectedRows = affected;
+      savedInventory = await queryRunner.manager.save(Inventory, inventory);
     } else {
-      const { affected } = await this.inventoryRepository.update(id, inventory);
-      affectedRows = affected;
-    }
-    if (!!affectedRows) {
-      return await this.findById(id);
+      savedInventory = await this.inventoryRepository.save(inventory);
     }
     return {
-      status: statusCodes.INTERNAL_SERVER_ERROR,
-      message: 'Nothing added',
+      status: statusCodes.OK,
+      message: statusNames.OK,
+      data: savedInventory,
     };
   }
 
