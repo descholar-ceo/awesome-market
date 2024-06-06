@@ -26,7 +26,11 @@ import {
   OrdersResponseDto,
 } from './dto/find-order.dto';
 import { Order } from './entities/order.entity';
-import { prepareOrderPendingNotificationEmailBody } from './order.utils';
+import {
+  prepareOrderDeliveredEmailBody,
+  prepareOrderPendingNotificationEmailBody,
+  prepareOrderShippedEmailBody,
+} from './order.utils';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { isUserAdmin } from '@/user/user.utils';
 
@@ -262,6 +266,31 @@ export class OrderService {
     const updatedOrder = await this.orderRepository.save(order);
 
     if (!!updatedOrder) {
+      switch (updatedOrder.status) {
+        case orderStatuses.SHIPPING: {
+          const { html, text } = prepareOrderShippedEmailBody({ order });
+          await this.mailService.sendEmail({
+            emailHtmlBody: html,
+            emailTextBody: text,
+            emailSubject: 'Your Order is on Its Way!',
+            fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+            personalizations: [{ to: { email: order.buyer.email } }],
+          });
+          break;
+        }
+        case orderStatuses.DELIVERED: {
+          const { html, text } = prepareOrderDeliveredEmailBody({ order });
+          await this.mailService.sendEmail({
+            emailHtmlBody: html,
+            emailTextBody: text,
+            emailSubject:
+              'Thank You for Shopping with Us! Your Order Has Arrived',
+            fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+            personalizations: [{ to: { email: order.buyer.email } }],
+          });
+          break;
+        }
+      }
       return {
         status: statusCodes.OK,
         message: statusNames.OK,
