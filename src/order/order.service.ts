@@ -222,13 +222,13 @@ export class OrderService {
   ): Promise<OrderResponseDto> {
     const order = (await this.findById(id))?.data;
     if (!order) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
+      throw new NotFoundException(`Order with ID ${id} not found`);
     }
     if (
       !isUserAdmin(currUser) &&
       order.buyer?.id !== currUser.id &&
-      order.orderItems?.some(
-        (currItem) => currItem.inventory.owner.id !== currUser.id,
+      !order.orderItems?.some(
+        (currItem) => currItem.inventory.owner.id === currUser.id,
       )
     ) {
       throw new ForbiddenException('You are not allowed to update this order');
@@ -242,11 +242,19 @@ export class OrderService {
       );
     }
     if (
+      updateOrderData.status === orderStatuses.SHIPPING &&
+      order.status !== orderStatuses.PROCESSING
+    ) {
+      throw new ForbiddenException(
+        'You cannot ship this order, because it is not in PROCESSING status',
+      );
+    }
+    if (
       updateOrderData.status === orderStatuses.DELIVERED &&
       order.status !== orderStatuses.SHIPPING
     ) {
       throw new ForbiddenException(
-        'You cannot mark this order as DELIVERED, because it was not in SHIPPING status yet',
+        'You cannot mark this order as DELIVERED, because it was not in SHIPPING status',
       );
     }
     order.updatedBy = currUser;
