@@ -14,6 +14,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -25,7 +26,7 @@ import {
   OrderResponseDto,
   OrdersResponseDto,
 } from './dto/find-order.dto';
-import { orderStatuses } from './order.constants';
+import { UpdateOrderStatusDto } from './dto/update-order.dto';
 import { OrderService } from './order.service';
 
 @UseGuards(AuthGuard, RolesGuard)
@@ -58,13 +59,13 @@ export class OrderController {
   }
 
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
-  @Get(':id/update-status')
+  @Patch(':id/update-status')
   @UsePipes(new ValidateIdFromParam())
-  async startShip(
+  async updateOrderStatus(
     @Param('id') id: string,
-    @Query('status') status: orderStatuses,
+    @Body() updateStatusData: UpdateOrderStatusDto,
     @CurrentUser() currUser: User,
   ): Promise<OrderResponseDto> {
-    return this.orderService.update(id, { status }, currUser);
+    return this.orderService.update(id, updateStatusData, currUser);
   }
 }
