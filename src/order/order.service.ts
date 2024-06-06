@@ -59,7 +59,10 @@ export class OrderService {
       for (const currData of createOrderData) {
         const { inventoryId, quantity } = currData;
         const inventory = (
-          await this.inventoryService.findById(inventoryId, queryRunner)
+          await this.inventoryService.findOneByIdWithoutAssociations(
+            inventoryId,
+            queryRunner,
+          )
         )?.data;
         if (inventory?.quantity < quantity) {
           return {

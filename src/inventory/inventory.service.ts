@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { QueryRunner, Repository } from 'typeorm';
+import { FindOneOptions, QueryRunner, Repository } from 'typeorm';
 import { CreateInventoryDto } from './dto/create-inventory.dto';
 import { InventoryResponseDto } from './dto/find-inventory.dto';
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
@@ -59,31 +59,29 @@ export class InventoryService {
     };
   }
 
-  async findById(
+  async findOneById(
     id: string,
     queryRunner?: QueryRunner,
   ): Promise<InventoryResponseDto> {
-    let inventory: Inventory;
-    const findCondition = {
-      where: { id },
-      relations: ['owner', 'product', 'orderItems', 'orderItems.order'],
-    };
-    if (!!queryRunner) {
-      inventory = await queryRunner.manager.findOne(Inventory, findCondition);
-    } else {
-      inventory = await this.inventoryRepository.findOne(findCondition);
-    }
-    if (!inventory) {
-      throw new NotFoundException(`Inventory with ID ${id} not found`);
-    }
+    return await this.findOneBy(
+      {
+        where: { id },
+        relations: ['owner', 'product', 'orderItems', 'orderItems.order'],
+      },
+      queryRunner,
+    );
+  }
 
-    return {
-      status: statusCodes.OK,
-      message: statusNames.OK,
-      data: plainToInstance(Inventory, inventory, {
-        excludeExtraneousValues: true,
-      }),
-    };
+  async findOneByIdWithoutAssociations(
+    id: string,
+    queryRunner?: QueryRunner,
+  ): Promise<InventoryResponseDto> {
+    return await this.findOneBy(
+      {
+        where: { id },
+      },
+      queryRunner,
+    );
   }
 
   async increaseInventory(
@@ -91,7 +89,7 @@ export class InventoryService {
     updateInventoryData: UpdateInventoryDto,
     currUser: User,
   ): Promise<InventoryResponseDto> {
-    const inventory = (await this.findById(id))?.data;
+    const inventory = (await this.findOneById(id))?.data;
     if (!inventory) {
       throw new NotFoundException(`Inventory with ID ${id} not found`);
     }
@@ -117,7 +115,7 @@ export class InventoryService {
     currUser: User,
     queryRunner?: QueryRunner,
   ): Promise<InventoryResponseDto> {
-    const inventory = (await this.findById(id))?.data;
+    const inventory = (await this.findOneByIdWithoutAssociations(id))?.data;
     if (!inventory) {
       throw new NotFoundException(`Inventory with ID ${id} not found`);
     }
@@ -142,24 +140,22 @@ export class InventoryService {
   }
 
   async remove(id: string, currUser: User): Promise<CommonResponseDto> {
-    const inventory = await this.findById(id);
-    if (!inventory) {
-      throw new NotFoundException(`Inventory with ID ${id} not found`);
-    }
+    try {
+      const inventory = await this.findOneByIdWithoutAssociations(id);
+      if (!inventory) {
+        throw new NotFoundException(`Inventory with ID ${id} not found`);
+      }
 
-    if (!isUserAdmin(currUser) && inventory.data.owner.id !== currUser.id) {
-      throw new ForbiddenException(
-        'You cannot delete a inventory that you do not own',
-      );
-    }
-    const { affected } = await this.inventoryRepository.delete(id);
-    if (!!affected) {
+      if (!isUserAdmin(currUser) && inventory.data.owner.id !== currUser.id) {
+        throw new ForbiddenException(
+          'You cannot delete a inventory that you do not own',
+        );
+      }
+      await this.inventoryRepository.delete(id);
       return { status: statusCodes.OK, message: statusNames.OK };
+    } catch (err) {
+      throw new IntersectionObserver(err);
     }
-    return {
-      status: statusCodes.INTERNAL_SERVER_ERROR,
-      message: 'Something went wrong, try again',
-    };
   }
 
   private async findByOwnerIdAndProductId(
@@ -172,5 +168,28 @@ export class InventoryService {
         product: { id: productId },
       },
     });
+  }
+
+  private async findOneBy(
+    whereCondition: FindOneOptions<Inventory>,
+    queryRunner: QueryRunner,
+  ): Promise<InventoryResponseDto> {
+    let inventory: Inventory;
+    if (!!queryRunner) {
+      inventory = await queryRunner.manager.findOne(Inventory, whereCondition);
+    } else {
+      inventory = await this.inventoryRepository.findOne(whereCondition);
+    }
+    if (!inventory) {
+      throw new NotFoundException(`Inventory not found`);
+    }
+
+    return {
+      status: statusCodes.OK,
+      message: statusNames.OK,
+      data: plainToInstance(Inventory, inventory, {
+        excludeExtraneousValues: true,
+      }),
+    };
   }
 }

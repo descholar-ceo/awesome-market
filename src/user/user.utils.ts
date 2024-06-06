@@ -1,6 +1,6 @@
 import { ADMIN_ROLE_NAME } from '@/role/role.constants';
-import { User } from './entities/user.entity';
 import { SellerAccountEmailBodyOptionsDto } from './dto/notification.dto';
+import { User } from './entities/user.entity';
 
 export const prepareAccountApprovalEmailBody = (
   data: SellerAccountEmailBodyOptionsDto,
