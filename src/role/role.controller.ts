@@ -15,6 +15,7 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { ADMIN_ROLE_NAME } from './role.constants';
 import { RoleService } from './role.service';
+import { ValidateUniqueRolePipe } from '@/pipes/validate-record-uniqueness/validate-unique-role/validate-unique-role.pipe';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('roles')
@@ -23,7 +24,7 @@ export class RoleController {
 
   @Roles([ADMIN_ROLE_NAME])
   @Post()
-  async create(@Body() createRoleData: CreateRoleDto) {
+  async create(@Body(ValidateUniqueRolePipe) createRoleData: CreateRoleDto) {
     return await this.roleService.create(createRoleData);
   }
 
@@ -41,7 +42,10 @@ export class RoleController {
 
   @Roles([ADMIN_ROLE_NAME])
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
+  update(
+    @Param('id') id: string,
+    @Body(ValidateUniqueRolePipe) updateRoleDto: UpdateRoleDto,
+  ) {
     return this.roleService.update(id, updateRoleDto);
   }
 

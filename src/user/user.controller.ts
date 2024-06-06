@@ -17,6 +17,7 @@ import { LoginDto } from './dto/login.dto';
 import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
 import { CommonResponseDto } from '@/common/common.dtos';
 import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
+import { ValidateUniqueUserPipe } from '@/pipes/validate-record-uniqueness/validate-unique-user/validate-unique-user.pipe';
 
 @Controller('users')
 export class UserController {
@@ -24,7 +25,7 @@ export class UserController {
 
   @Post()
   async create(
-    @Body() createUserData: CreateUserDto,
+    @Body(ValidateUniqueUserPipe) createUserData: CreateUserDto,
     @Query('user-type') userType?: string,
   ) {
     return await this.userService.create(createUserData, userType);
@@ -45,15 +46,18 @@ export class UserController {
     return await this.userService.approveSellerAccount(sellerId);
   }
 
-  // @Get(':id')
-  // @UsePipes(new ValidateUuidPipe())
-  // findOne(@Param('id') id: string) {
-  //   return this.userService.findOne(id);
-  // }
+  @Get(':id')
+  @UsePipes(new ValidateUuidPipe())
+  findOne(@Param('id') id: string) {
+    return this.userService.findOneById(id);
+  }
 
   @Patch(':id')
   @UsePipes(new ValidateIdFromParam())
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  update(
+    @Param('id') id: string,
+    @Body(ValidateUniqueUserPipe) updateUserDto: UpdateUserDto,
+  ) {
     return this.userService.update(id, updateUserDto);
   }
 
