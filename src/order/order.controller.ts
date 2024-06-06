@@ -25,6 +25,7 @@ import {
   OrderResponseDto,
   OrdersResponseDto,
 } from './dto/find-order.dto';
+import { UpdateOrderStatusDto } from './dto/update-order.dto';
 import { OrderService } from './order.service';
 
 @UseGuards(AuthGuard, RolesGuard)
@@ -54,5 +55,16 @@ export class OrderController {
   @UsePipes(new ValidateIdFromParam())
   findById(@Param('id') id: string) {
     return this.orderService.findById(id);
+  }
+
+  @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
+  @Get(':id/update-status')
+  @UsePipes(new ValidateIdFromParam())
+  async startShip(
+    @Param('id') id: string,
+    @Query('status') statusData: UpdateOrderStatusDto,
+    @CurrentUser() currUser: User,
+  ): Promise<OrderResponseDto> {
+    return this.orderService.update(id, statusData, currUser);
   }
 }
