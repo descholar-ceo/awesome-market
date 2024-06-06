@@ -13,6 +13,7 @@ Awesome Market is a marketplace API with features for user registration, login, 
   - Seller: Add products, manage inventories
   - Buyer: Create orders
 - Product Reviews
+- Manage orders including payment with card
 
 ### Endpoints
 
