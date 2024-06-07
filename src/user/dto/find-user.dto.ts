@@ -1,12 +1,32 @@
 import { PaginationDto } from '@/common/common.dtos';
-import { IsDateString, IsIn, IsOptional } from 'class-validator';
+import {
+  IsBooleanString,
+  IsDateString,
+  IsIn,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { User } from '../entities/user.entity';
 
 export class FindUserFiltersDto {
   @IsOptional()
+  @IsString()
   firstName?: string;
   @IsOptional()
+  @IsString()
   lastName?: string;
+  @IsOptional()
+  @IsString()
+  phoneNumber?: string;
+  @IsOptional()
+  @IsString()
+  email?: string;
+  @IsOptional()
+  @IsBooleanString()
+  isActive?: boolean;
+  @IsOptional()
+  @IsString()
+  shippingAddress?: string;
   @IsOptional()
   @IsDateString()
   createdFromDate?: Date;

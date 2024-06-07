@@ -23,10 +23,20 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { plainToInstance } from 'class-transformer';
-import { DataSource, FindOneOptions, QueryRunner, Repository } from 'typeorm';
+import {
+  DataSource,
+  FindOneOptions,
+  QueryRunner,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { BUYER_ROLE_NAME, SELLER_ROLE_NAME } from './../role/role.constants';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UserResponseDto } from './dto/find-user.dto';
+import {
+  FindUserFiltersDto,
+  UserResponseDto,
+  UsersResponseDto,
+} from './dto/find-user.dto';
 import { AuthTokenDataDto, LoginDto, LoginResponseDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -35,6 +45,7 @@ import {
   prepareAccountApprovedMessageBody,
   prepareAccountPendingNotifyBody,
 } from './user.utils';
+import { getDateInterval } from '@/common/utils/dates.utils';
 
 @Injectable()
 export class UserService {
@@ -124,6 +135,79 @@ export class UserService {
     return { status: statusCodes.OK, message: statusMessages.OK };
   }
 
+  async findWithFilters(
+    filters: FindUserFiltersDto,
+  ): Promise<UsersResponseDto> {
+    const {
+      firstName,
+      lastName,
+      createdFromDate,
+      createdToDate,
+      phoneNumber,
+      pageNumber,
+      recordsPerPage,
+      sortBy,
+      sortOrder,
+      email,
+      shippingAddress,
+    } = filters;
+    let { isActive } = filters;
+    if (!!isActive) {
+      isActive = Boolean(isActive);
+    }
+    const { startDate, endDate } = getDateInterval(
+      createdFromDate,
+      createdToDate,
+    );
+    const findUsersQuery = this.buildFindUsersQuery(
+      firstName,
+      lastName,
+      phoneNumber,
+      email,
+      shippingAddress,
+      isActive,
+      startDate,
+      endDate,
+      sortBy,
+      sortOrder?.toUpperCase(),
+    );
+
+    const totalRecords = await findUsersQuery.getCount();
+    if (totalRecords === 0) {
+      return {
+        status: statusCodes.NOT_FOUND,
+        message: 'No records found',
+      };
+    }
+    const page =
+      isNaN(pageNumber) || Number(pageNumber) < 1 ? 1 : Number(pageNumber);
+    const limit =
+      isNaN(recordsPerPage) || recordsPerPage < 1 ? 10 : Number(recordsPerPage);
+    const users = await findUsersQuery
+      .leftJoinAndSelect('user.roles', 'roles')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
+
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    return {
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data: {
+        users: plainToInstance(User, users, {
+          excludeExtraneousValues: true,
+        }),
+        pagination: {
+          totalPages,
+          totalRecords,
+          currentPage: page ?? 1,
+          recordsPerPage: limit ?? 10,
+        },
+      },
+    };
+  }
+
   async findOneById(
     id: string,
     queryRunner?: QueryRunner,
@@ -153,18 +237,11 @@ export class UserService {
 
   async update(id: string, updateUserData: UpdateUserDto) {
     const { data: user } = (await this.findOneById(id)) ?? {};
-    if (!user) {
-      throw new CustomNotFoundException({ messages: [`User not found`] });
-    }
     Object.assign(user, updateUserData);
     return await this.userRepository.save(user);
   }
 
   async remove(id: string): Promise<CommonResponseDto> {
-    const { data: user } = (await this.findOneById(id)) ?? {};
-    if (!user) {
-      throw new CustomNotFoundException({ messages: ['User not found'] });
-    }
     await this.userRepository.delete(id);
     return { status: statusCodes.OK, message: statusMessages.OK };
   }
@@ -332,10 +409,7 @@ export class UserService {
       user = await this.userRepository.findOne(whereCondition);
     }
     if (!user) {
-      return {
-        status: statusCodes.NOT_FOUND,
-        message: statusMessages.NOT_FOUND,
-      };
+      throw new CustomNotFoundException({ messages: ['User Not Found'] });
     }
     return {
       status: statusCodes.OK,
@@ -344,5 +418,69 @@ export class UserService {
         excludeExtraneousValues: true,
       }),
     };
+  }
+
+  private buildFindUsersQuery(
+    firstName?: string,
+    lastName?: string,
+    phoneNumber?: string,
+    email?: string,
+    shippingAddress?: string,
+    isActive?: boolean,
+    startDate?: Date,
+    endDate?: Date,
+    sortBy?: string,
+    sortOrder?: any,
+  ): SelectQueryBuilder<User> {
+    const query = this.userRepository.createQueryBuilder('user');
+
+    if (firstName) {
+      query.andWhere('user.firstName LIKE :firstName', {
+        firstName: `%${firstName}%`,
+      });
+    }
+
+    if (lastName) {
+      query.andWhere('user.lastName LIKE :lastName', {
+        lastName: `%${lastName}%`,
+      });
+    }
+
+    if (phoneNumber) {
+      query.andWhere('user.phoneNumber LIKE :phoneNumber', {
+        phoneNumber: `%${phoneNumber}%`,
+      });
+    }
+
+    if (email) {
+      query.andWhere('user.email LIKE :email', {
+        email: `%${email}%`,
+      });
+    }
+
+    if (shippingAddress) {
+      query.andWhere('user.shippingAddress LIKE :shippingAddress', {
+        shippingAddress: `%${shippingAddress}%`,
+      });
+    }
+
+    if (isActive) {
+      query.andWhere('user.isActive = :isActive', { isActive });
+    }
+
+    if (startDate) {
+      query.andWhere('user.createdAt >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      query.andWhere('user.createdAt <= :endDate', { endDate });
+    }
+
+    const sortColumn = sortBy || 'createdAt';
+    const sortOrderValue = sortOrder || 'DESC';
+
+    query.orderBy(`user.${sortColumn}`, sortOrderValue);
+
+    return query;
   }
 }
