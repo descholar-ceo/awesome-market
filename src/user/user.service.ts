@@ -390,9 +390,7 @@ export class UserService {
           personalizations: [{ to: { email: savedUser.email } }],
         });
       } catch (err) {
-        if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-          Logger.error(err);
-        }
+        this.logError(err);
         throw new CustomInternalServerErrorException({
           messages: [
             err?.message ??
