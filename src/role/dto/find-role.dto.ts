@@ -25,14 +25,14 @@ export class FindRoleFiltersDto {
   @IsIn(['asc', 'desc', 'ASC', 'DESC'])
   sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc';
 }
-export class CategoriesDataDto {
+export class RolesDataDto {
   roles: Role[];
   pagination: PaginationDto;
 }
-export class CategoriesResponseDto {
+export class RolesResponseDto {
   status: number;
   message: string;
-  data?: CategoriesDataDto;
+  data?: RolesDataDto;
 }
 export class RoleResponseDto {
   status: number;

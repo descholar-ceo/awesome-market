@@ -84,7 +84,11 @@ export class UserService {
         await this.sendSellerAccountApprovalEmailToAdmin(savedUser);
       }
 
-      return this.buildUserResponse(savedUser, responseMessage);
+      return this.buildUserResponse(
+        savedUser,
+        statusCodes.CREATED,
+        responseMessage,
+      );
     } catch (err) {
       await queryRunner.rollbackTransaction();
       this.logError(err);
@@ -136,7 +140,8 @@ export class UserService {
     const sellerUser = await this.findAndValidateSeller(sellerId);
     this.ensureSellerIsNotActive(sellerUser);
 
-    const updatedSeller = await this.update(sellerId, { isActive: true });
+    const { data: updatedSeller } =
+      (await this.update(sellerId, { isActive: true })) ?? {};
     await this.sendApprovalEmail(updatedSeller);
 
     return { status: statusCodes.OK, message: statusMessages.OK };
@@ -242,12 +247,14 @@ export class UserService {
   async update(id: string, updateUserData: UpdateUserDto) {
     const { data: user } = (await this.findOneById(id)) ?? {};
     Object.assign(user, updateUserData);
-    return await this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+    return this.buildUserResponse(savedUser, statusCodes.OK, statusMessages.OK);
   }
 
-  async remove(id: string): Promise<CommonResponseDto> {
+  async remove(id: string): Promise<UserResponseDto> {
+    const { data: user } = (await this.findOneBy({ where: { id } })) ?? {};
     await this.userRepository.delete(id);
-    return { status: statusCodes.OK, message: statusMessages.OK };
+    return this.buildUserResponse(user, statusCodes.OK, statusMessages.OK);
   }
 
   private validateSellerId(sellerId: string): void {
@@ -327,9 +334,13 @@ export class UserService {
     return !!user?.roles?.some((role) => role.name === SELLER_ROLE_NAME);
   }
 
-  private buildUserResponse(user: User, message: string): UserResponseDto {
+  private buildUserResponse(
+    user: User,
+    status: number = statusCodes.CREATED,
+    message: string = statusMessages.CREATED,
+  ): UserResponseDto {
     return {
-      status: statusCodes.CREATED,
+      status,
       message,
       data: plainToInstance(User, user, {
         excludeExtraneousValues: true,
