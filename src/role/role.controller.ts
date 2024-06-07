@@ -29,12 +29,6 @@ export class RoleController {
   }
 
   @Roles([ADMIN_ROLE_NAME])
-  @Get()
-  findAll() {
-    return this.roleService.findAll();
-  }
-
-  @Roles([ADMIN_ROLE_NAME])
   @Get(':id')
   findById(@Param('id') id: string) {
     return this.roleService.findById(id);
