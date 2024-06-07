@@ -10,3 +10,6 @@ export class PaginationDto {
   totalRecords: number;
   currentPage: number;
 }
+export class ResponseErrorMessageDto {
+  messages: string[];
+}
