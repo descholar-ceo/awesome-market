@@ -18,6 +18,7 @@ import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
 import { CommonResponseDto } from '@/common/common.dtos';
 import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
 import { ValidateUniqueUserPipe } from '@/pipes/validate-record-uniqueness/validate-unique-user/validate-unique-user.pipe';
+import { UserResponseDto } from './dto/find-user.dto';
 
 @Controller('users')
 export class UserController {
@@ -27,7 +28,7 @@ export class UserController {
   async create(
     @Body(ValidateUniqueUserPipe) createUserData: CreateUserDto,
     @Query('user-type') userType?: string,
-  ) {
+  ): Promise<UserResponseDto> {
     return await this.userService.create(createUserData, userType);
   }
 

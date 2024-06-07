@@ -1,7 +1,7 @@
 import { CategoryService } from '@/category/category.service';
 import { CommonResponseDto } from '@/common/common.dtos';
 import { getDateInterval } from '@/common/utils/dates.utils';
-import { statusCodes, statusNames } from '@/common/utils/status.utils';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { User } from '@/user/entities/user.entity';
 import { isUserAdmin } from '@/user/user.utils';
 import {
@@ -43,7 +43,7 @@ export class ProductService {
     const savedProduct = await this.productRepository.save(newProduct);
     return {
       status: statusCodes.CREATED,
-      message: statusNames.CREATED,
+      message: statusMessages.CREATED,
       data: plainToInstance(Product, savedProduct, {
         excludeExtraneousValues: true,
       }),
@@ -120,7 +120,7 @@ export class ProductService {
 
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: {
         products: plainToInstance(Product, products, {
           excludeExtraneousValues: true,
@@ -155,7 +155,7 @@ export class ProductService {
 
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: plainToInstance(Product, product, {
         excludeExtraneousValues: true,
       }),
@@ -210,7 +210,7 @@ export class ProductService {
     }
     const { affected } = await this.productRepository.delete(id);
     if (!!affected) {
-      return { status: statusCodes.OK, message: statusNames.OK };
+      return { status: statusCodes.OK, message: statusMessages.OK };
     }
     return {
       status: statusCodes.INTERNAL_SERVER_ERROR,

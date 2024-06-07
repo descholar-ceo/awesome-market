@@ -1,7 +1,7 @@
 import { orderStatuses, paymentStatuses } from './order.constants';
 import { PRODUCTION } from '@/common/constants.common';
 import { getDateInterval } from '@/common/utils/dates.utils';
-import { statusCodes, statusNames } from '@/common/utils/status.utils';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { ConfigService } from '@/config/config.service';
 import { API_URL, APP_MAILING_ADDRESS, NODE_ENV } from '@/config/config.utils';
 import { InventoryService } from '@/inventory/inventory.service';
@@ -109,7 +109,7 @@ export class OrderService {
       }
       return {
         status: statusCodes.CREATED,
-        message: `${statusNames.CREATED}: We have sent you an email that contains payment info`,
+        message: `${statusMessages.CREATED}: We have sent you an email that contains payment info`,
         data: plainToInstance(Order, newOrder, {
           excludeExtraneousValues: true,
         }),
@@ -180,7 +180,7 @@ export class OrderService {
 
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: {
         orders: plainToInstance(Order, orders, {
           excludeExtraneousValues: true,
@@ -213,7 +213,7 @@ export class OrderService {
 
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: plainToInstance(Order, order, {
         excludeExtraneousValues: true,
       }),
@@ -294,13 +294,13 @@ export class OrderService {
       }
       return {
         status: statusCodes.OK,
-        message: statusNames.OK,
+        message: statusMessages.OK,
         data: updatedOrder,
       };
     } else {
       return {
         status: statusCodes.INTERNAL_SERVER_ERROR,
-        message: statusNames.INTERNAL_SERVER_ERROR,
+        message: statusMessages.INTERNAL_SERVER_ERROR,
       };
     }
   }

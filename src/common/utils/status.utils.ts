@@ -13,7 +13,7 @@ export enum statusCodes {
   SEE_OTHER = HttpStatus.SEE_OTHER,
 }
 
-export enum statusNames {
+export enum statusMessages {
   OK = 'Ok',
   PERMANENTLY_MOVED = 'Permanently Moved',
   BAD_REQUEST = 'Bad Request',

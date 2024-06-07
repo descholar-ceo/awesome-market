@@ -17,7 +17,7 @@ import {
 import Stripe from 'stripe';
 import { StripProductLineDto } from './stripe.dto';
 import { CommonResponseDto } from '@/common/common.dtos';
-import { statusCodes, statusNames } from '@/common/utils/status.utils';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { Response } from 'express';
 import { UUID_REGEX_FROM_ORDERS_URL } from '@/common/utils/regex.utils';
 import { PRODUCTION } from '@/common/constants.common';
@@ -50,7 +50,7 @@ export class StripeService {
     if (!token) {
       return {
         status: statusCodes.UNAUTHORIZED,
-        message: statusNames.UNAUTHORIZED,
+        message: statusMessages.UNAUTHORIZED,
       };
     }
     let user: User;
@@ -113,14 +113,14 @@ export class StripeService {
   async handleSuccessfulStripePayment(): Promise<CommonResponseDto> {
     return {
       status: statusCodes.OK,
-      message: `${statusNames.OK}: Payment success received, check your email for your order status updates. Thank you for shopping with us!`,
+      message: `${statusMessages.OK}: Payment success received, check your email for your order status updates. Thank you for shopping with us!`,
     };
   }
 
   async handleCancelledStripePayment(): Promise<CommonResponseDto> {
     return {
       status: statusCodes.OK,
-      message: `${statusNames.OK}: We will communicate further steps via your email`,
+      message: `${statusMessages.OK}: We will communicate further steps via your email`,
     };
   }
 
@@ -169,7 +169,7 @@ export class StripeService {
       return this.handleError(
         res,
         statusCodes.BAD_REQUEST,
-        `${statusNames.BAD_REQUEST}: Missing order id from the success url`,
+        `${statusMessages.BAD_REQUEST}: Missing order id from the success url`,
         'There was no order id from the success url sent from stripe',
       );
     }
@@ -196,7 +196,7 @@ export class StripeService {
           emailHtmlBody: html,
           emailTextBody: text,
         });
-        return res.status(statusCodes.OK).send(statusNames.OK);
+        return res.status(statusCodes.OK).send(statusMessages.OK);
       }
     } catch (err) {
       this.handleInternalError(err, res);
@@ -212,7 +212,7 @@ export class StripeService {
       return this.handleError(
         res,
         statusCodes.BAD_REQUEST,
-        `${statusNames.BAD_REQUEST}: Missing order id from the cancel url`,
+        `${statusMessages.BAD_REQUEST}: Missing order id from the cancel url`,
         'There was no order id from the cancel url sent from stripe',
       );
     }
@@ -226,7 +226,7 @@ export class StripeService {
         { paymentStatus: paymentStatuses.FAILED },
         order.buyer,
       );
-      return res.status(statusCodes.OK).send(statusNames.OK);
+      return res.status(statusCodes.OK).send(statusMessages.OK);
     } catch (err) {
       this.handleInternalError(err, res);
     }
@@ -245,7 +245,7 @@ export class StripeService {
     if (!order) {
       res
         .status(statusCodes.NOT_FOUND)
-        .send(`${statusNames.NOT_FOUND}: Order not found!`);
+        .send(`${statusMessages.NOT_FOUND}: Order not found!`);
     }
     return order;
   }
@@ -268,6 +268,6 @@ export class StripeService {
     }
     return res
       .status(statusCodes.INTERNAL_SERVER_ERROR)
-      .send(statusNames.INTERNAL_SERVER_ERROR);
+      .send(statusMessages.INTERNAL_SERVER_ERROR);
   }
 }
