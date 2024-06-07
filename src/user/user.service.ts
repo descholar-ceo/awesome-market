@@ -1,7 +1,10 @@
 import { CommonResponseDto } from '@/common/common.dtos';
 import { PRODUCTION } from '@/common/constants.common';
 import {
+  CustomBadRequest,
+  CustomConflictException,
   CustomInternalServerErrorException,
+  CustomNotFoundException,
   CustomUnauthorizedException,
 } from '@/common/exception/custom.exception';
 import { statusCodes, statusMessages } from '@/common/utils/status.utils';
@@ -14,18 +17,13 @@ import {
   NODE_ENV,
 } from '@/config/config.utils';
 import { MailService } from '@/mail/mail.service';
+import { Role } from '@/role/entities/role.entity';
 import { RoleService } from '@/role/role.service';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { plainToInstance } from 'class-transformer';
-import {
-  DataSource,
-  DeleteResult,
-  FindOneOptions,
-  QueryRunner,
-  Repository,
-} from 'typeorm';
+import { DataSource, FindOneOptions, QueryRunner, Repository } from 'typeorm';
 import { BUYER_ROLE_NAME, SELLER_ROLE_NAME } from './../role/role.constants';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserResponseDto } from './dto/find-user.dto';
@@ -37,7 +35,6 @@ import {
   prepareAccountApprovedMessageBody,
   prepareAccountPendingNotifyBody,
 } from './user.utils';
-import { Role } from '@/role/entities/role.entity';
 
 @Injectable()
 export class UserService {
@@ -116,55 +113,15 @@ export class UserService {
   }
 
   async approveSellerAccount(sellerId: string): Promise<CommonResponseDto> {
-    if (!sellerId) {
-      return {
-        status: statusCodes.BAD_REQUEST,
-        message: 'Seller Id is required',
-      };
-    }
-    const sellerUser = (await this.findOneBy({ where: { id: sellerId } }))
-      ?.data;
-    if (!sellerUser) {
-      return {
-        status: statusCodes.NOT_FOUND,
-        message: 'Seller Not Found',
-      };
-    }
-    if (sellerUser.isActive) {
-      return {
-        status: statusCodes.CONFLICT,
-        message: 'Seller is already active',
-      };
-    }
+    this.validateSellerId(sellerId);
+
+    const sellerUser = await this.findAndValidateSeller(sellerId);
+    this.ensureSellerIsNotActive(sellerUser);
+
     const updatedSeller = await this.update(sellerId, { isActive: true });
-    if (!!updatedSeller?.isActive) {
-      try {
-        const { html, text } = prepareAccountApprovedMessageBody({
-          approvalUrl: null,
-          admin: null,
-          seller: updatedSeller,
-        });
-        await this.mailService.sendEmail({
-          fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
-          emailHtmlBody: html,
-          emailTextBody: text,
-          emailSubject: 'Your Seller Account Has Been Approved!',
-          personalizations: [{ to: { email: updatedSeller.email } }],
-        });
-        return {
-          status: statusCodes.OK,
-          message: statusMessages.OK,
-        };
-      } catch (err) {
-        if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-          Logger.error(err);
-        }
-      }
-    }
-    return {
-      status: statusCodes.INTERNAL_SERVER_ERROR,
-      message: statusMessages.INTERNAL_SERVER_ERROR,
-    };
+    await this.sendApprovalEmail(updatedSeller);
+
+    return { status: statusCodes.OK, message: statusMessages.OK };
   }
 
   async findOneById(
@@ -195,23 +152,58 @@ export class UserService {
   }
 
   async update(id: string, updateUserData: UpdateUserDto) {
-    const user = await this.userRepository.findOneBy({ id });
+    const { data: user } = (await this.findOneById(id)) ?? {};
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new CustomNotFoundException({ messages: [`User not found`] });
     }
     Object.assign(user, updateUserData);
     return await this.userRepository.save(user);
   }
 
   async remove(id: string): Promise<CommonResponseDto> {
-    const { affected }: DeleteResult = await this.userRepository.delete(id);
-    if (!!affected) {
-      return { status: statusCodes.OK, message: statusMessages.OK };
+    const { data: user } = (await this.findOneById(id)) ?? {};
+    if (!user) {
+      throw new CustomNotFoundException({ messages: ['User not found'] });
     }
-    return {
-      status: statusCodes.INTERNAL_SERVER_ERROR,
-      message: 'Something went wrong, try again',
-    };
+    await this.userRepository.delete(id);
+    return { status: statusCodes.OK, message: statusMessages.OK };
+  }
+
+  private validateSellerId(sellerId: string): void {
+    if (!sellerId) {
+      throw new CustomBadRequest({ messages: ['Seller Id is required'] });
+    }
+  }
+
+  private async findAndValidateSeller(sellerId: string): Promise<User> {
+    const { data: sellerUser } = (await this.findOneById(sellerId)) ?? {};
+    if (!sellerUser) {
+      throw new CustomNotFoundException({ messages: ['Seller Not Found'] });
+    }
+    return sellerUser;
+  }
+
+  private ensureSellerIsNotActive(sellerUser: User): void {
+    if (sellerUser.isActive) {
+      throw new CustomConflictException({
+        messages: ['Seller is already active'],
+      });
+    }
+  }
+
+  private async sendApprovalEmail(seller: User): Promise<void> {
+    const { html, text } = prepareAccountApprovedMessageBody({
+      approvalUrl: null,
+      admin: null,
+      seller,
+    });
+    await this.mailService.sendEmail({
+      fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+      emailHtmlBody: html,
+      emailTextBody: text,
+      emailSubject: 'Your Seller Account Has Been Approved!',
+      personalizations: [{ to: { email: seller.email } }],
+    });
   }
 
   private throwUnauthorizedError(): void {
