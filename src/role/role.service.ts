@@ -1,12 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { CustomNotFoundException } from '@/common/exception/custom.exception';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
 import { FindOneOptions, QueryRunner, Repository } from 'typeorm';
 import { CreateRoleDto } from './dto/create-role.dto';
+import { RoleResponseDto } from './dto/find-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { Role } from './entities/role.entity';
-import { plainToInstance } from 'class-transformer';
-import { statusCodes, statusMessages } from '@/common/utils/status.utils';
-import { RoleResponseDto } from './dto/find-role.dto';
 
 @Injectable()
 export class RoleService {
@@ -39,29 +40,32 @@ export class RoleService {
   ): Promise<RoleResponseDto> {
     return await this.findOneBy({ where: { name } }, queryRunner);
   }
-  async findAll() {
-    return await this.roleRepository.find();
+
+  async findById(id: string): Promise<RoleResponseDto> {
+    return await this.findOneBy({ where: { id } });
   }
 
-  async find(where: Record<string, any>) {
-    return await this.roleRepository.find({ where });
-  }
-
-  async findById(id: string): Promise<Role> {
-    return await this.roleRepository.findOneBy({ id });
-  }
-
-  async update(id: string, updateRoleData: UpdateRoleDto) {
-    const role = await this.roleRepository.findBy({ id });
+  async update(
+    id: string,
+    updateRoleData: UpdateRoleDto,
+  ): Promise<RoleResponseDto> {
+    const { data: role } = (await this.findOneBy({ where: { id } })) ?? {};
     if (!role) {
-      throw new NotFoundException(`Role with ID ${id} not found`);
+      throw new CustomNotFoundException({ messages: ['Role Not Found'] });
     }
     Object.assign(role, updateRoleData);
-    return await this.roleRepository.save(role);
+    const savedRole = await this.roleRepository.save(role);
+    return {
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data: savedRole,
+    };
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<RoleResponseDto> {
+    const { data: role } = (await this.findOneBy({ where: { id } })) ?? {};
     await this.roleRepository.delete(id);
+    return { status: statusCodes.OK, message: statusMessages.OK, data: role };
   }
 
   private async findOneBy(
@@ -75,10 +79,9 @@ export class RoleService {
       role = await this.roleRepository.findOne(whereCondition);
     }
     if (!role) {
-      return {
-        status: statusCodes.NOT_FOUND,
-        message: statusMessages.NOT_FOUND,
-      };
+      throw new CustomNotFoundException({
+        messages: [statusMessages.NOT_FOUND],
+      });
     }
     return {
       status: statusCodes.OK,
