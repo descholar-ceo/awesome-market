@@ -28,7 +28,7 @@ export abstract class BaseExceptionFilter
       this.getResponse(httpContext)
         .status(statusCodes.INTERNAL_SERVER_ERROR)
         .json({
-          message: ['Unhandled Exception'],
+          message: [statusMessages.INTERNAL_SERVER_ERROR],
           statusCode: statusCodes.INTERNAL_SERVER_ERROR,
           error: statusMessages.INTERNAL_SERVER_ERROR,
         });
