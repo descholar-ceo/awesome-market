@@ -29,7 +29,7 @@ import {
 import { BUYER_ROLE_NAME, SELLER_ROLE_NAME } from './../role/role.constants';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserResponseDto } from './dto/find-user.dto';
-import { LoginDto, LoginResponseDto } from './dto/login.dto';
+import { AuthTokenDataDto, LoginDto, LoginResponseDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import {
@@ -93,57 +93,25 @@ export class UserService {
   async login(loginData: LoginDto): Promise<LoginResponseDto> {
     const { email, password } = loginData;
     const { data: user } = (await this.findOneByEmail(email)) ?? {};
-    if (!user || !user?.isActive) {
-      throw new CustomUnauthorizedException({
-        messages: [`${statusMessages.UNAUTHORIZED}: Email or Password Wrong`],
-      });
-    }
+    if (!user || !user?.isActive) this.throwUnauthorizedError();
     if (bcrypt.compareSync(password, user.password)) {
       const { accessToken, refreshToken } = await generateTokens(user);
-      return {
-        status: statusCodes.CREATED,
-        message: statusMessages.CREATED,
-        data: { accessToken, refreshToken },
-      };
+      return await this.buildTokenResponse({ accessToken, refreshToken });
     }
-    throw new CustomUnauthorizedException({
-      messages: [`${statusMessages.UNAUTHORIZED}: Email or Password Wrong`],
-    });
+    this.throwUnauthorizedError();
   }
 
   async refreshAccessToken(refreshToken: string): Promise<LoginResponseDto> {
-    if (!refreshToken) {
-      return {
-        status: statusCodes.BAD_REQUEST,
-        message: 'Pass authorization that should be the refresh token',
-      };
-    }
+    if (!refreshToken) this.throwUnauthorizedError();
     try {
       const { id } = (await decodeToken(refreshToken)) ?? {};
-      const user = await this.userRepository.findOne({
-        where: { id },
-        relations: ['roles'],
-      });
-      if (!user) {
-        return {
-          status: statusCodes.UNAUTHORIZED,
-          message: 'Refresh token invalid',
-        };
-      }
+      const { data: user } = (await this.findOneById(id)) ?? {};
+      if (!user) this.throwUnauthorizedError();
       const { accessToken } = await generateTokens(user);
-      return {
-        status: statusCodes.OK,
-        message: statusMessages.OK,
-        data: { accessToken },
-      };
+      return await this.buildTokenResponse({ accessToken });
     } catch (err) {
-      if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-        Logger.error(err);
-      }
-      return {
-        status: statusCodes.UNAUTHORIZED,
-        message: 'Refresh token invalid',
-      };
+      this.logError(err);
+      this.throwUnauthorizedError();
     }
   }
 
@@ -204,7 +172,7 @@ export class UserService {
     queryRunner?: QueryRunner,
   ): Promise<UserResponseDto> {
     return await this.findOneBy(
-      { where: { id }, relations: ['inventories', 'orders'] },
+      { where: { id }, relations: ['inventories', 'orders', 'roles'] },
       queryRunner,
     );
   }
@@ -246,6 +214,11 @@ export class UserService {
     };
   }
 
+  private throwUnauthorizedError(): void {
+    throw new CustomUnauthorizedException({
+      messages: [`${statusCodes.UNAUTHORIZED}: Invalid Credentials`],
+    });
+  }
   private determineUserRoleAndData(
     createUserData: CreateUserDto,
     userType?: string,
@@ -288,6 +261,16 @@ export class UserService {
       data: plainToInstance(User, user, {
         excludeExtraneousValues: true,
       }),
+    };
+  }
+
+  private async buildTokenResponse(
+    token: AuthTokenDataDto,
+  ): Promise<LoginResponseDto> {
+    return {
+      status: statusCodes.CREATED,
+      message: statusMessages.CREATED,
+      data: token,
     };
   }
 
