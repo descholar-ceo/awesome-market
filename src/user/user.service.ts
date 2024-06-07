@@ -1,6 +1,9 @@
 import { CommonResponseDto } from '@/common/common.dtos';
 import { PRODUCTION } from '@/common/constants.common';
-import { CustomInternalServerErrorException } from '@/common/exception/custom.exception';
+import {
+  CustomInternalServerErrorException,
+  CustomUnauthorizedException,
+} from '@/common/exception/custom.exception';
 import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { decodeToken, generateTokens } from '@/common/utils/token.utils';
 import { ConfigService } from '@/config/config.service';
@@ -89,28 +92,23 @@ export class UserService {
 
   async login(loginData: LoginDto): Promise<LoginResponseDto> {
     const { email, password } = loginData;
-    const user = await this.userRepository.findOne({
-      where: { email },
-      relations: ['roles'],
-    });
+    const { data: user } = (await this.findOneByEmail(email)) ?? {};
     if (!user || !user?.isActive) {
-      return {
-        status: statusCodes.UNAUTHORIZED,
-        message: 'Email or Password Wrong',
-      };
+      throw new CustomUnauthorizedException({
+        messages: [`${statusMessages.UNAUTHORIZED}: Email or Password Wrong`],
+      });
     }
     if (bcrypt.compareSync(password, user.password)) {
       const { accessToken, refreshToken } = await generateTokens(user);
       return {
-        status: statusCodes.OK,
-        message: statusMessages.OK,
+        status: statusCodes.CREATED,
+        message: statusMessages.CREATED,
         data: { accessToken, refreshToken },
       };
     }
-    return {
-      status: statusCodes.UNAUTHORIZED,
-      message: statusMessages.UNAUTHORIZED,
-    };
+    throw new CustomUnauthorizedException({
+      messages: [`${statusMessages.UNAUTHORIZED}: Email or Password Wrong`],
+    });
   }
 
   async refreshAccessToken(refreshToken: string): Promise<LoginResponseDto> {
@@ -215,7 +213,10 @@ export class UserService {
     email: string,
     queryRunner?: QueryRunner,
   ): Promise<UserResponseDto> {
-    return await this.findOneBy({ where: { email } }, queryRunner);
+    return await this.findOneBy(
+      { where: { email }, relations: ['roles'] },
+      queryRunner,
+    );
   }
 
   async findOneByPhoneNumber(
