@@ -100,13 +100,20 @@ export class UserService {
 
   async login(loginData: LoginDto): Promise<LoginResponseDto> {
     const { email, password } = loginData;
-    const { data: user } = (await this.findOneByEmail(email)) ?? {};
+    const user = await this.userRepository.findOne({
+      where: { email },
+      relations: ['roles'],
+    });
     if (!user || !user?.isActive) this.throwUnauthorizedError();
-    if (bcrypt.compareSync(password, user.password)) {
-      const { accessToken, refreshToken } = await generateTokens(user);
-      return await this.buildTokenResponse({ accessToken, refreshToken });
+    try {
+      if (bcrypt.compareSync(password, user.password)) {
+        const { accessToken, refreshToken } = await generateTokens(user);
+        return await this.buildTokenResponse({ accessToken, refreshToken });
+      }
+    } catch (err) {
+      this.logError(err);
+      this.throwUnauthorizedError();
     }
-    this.throwUnauthorizedError();
   }
 
   async refreshAccessToken(refreshToken: string): Promise<LoginResponseDto> {
@@ -173,11 +180,8 @@ export class UserService {
     );
 
     const totalRecords = await findUsersQuery.getCount();
-    if (totalRecords === 0) {
-      return {
-        status: statusCodes.NOT_FOUND,
-        message: 'No records found',
-      };
+    if (!totalRecords) {
+      throw new CustomNotFoundException({ messages: ['Users Not Found'] });
     }
     const page =
       isNaN(pageNumber) || Number(pageNumber) < 1 ? 1 : Number(pageNumber);
