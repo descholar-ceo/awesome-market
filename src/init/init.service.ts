@@ -28,7 +28,7 @@ export class InitService {
   ) {}
 
   private async createOrFindRole(name: string): Promise<RoleResponseDto> {
-    const role = (await this.roleService.find({ name }))?.[0];
+    const { data: role } = (await this.roleService.findOneByName(name)) ?? {};
     if (!role) {
       if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
         Logger.debug(`Initial ${name} role does not exist, creating it...`);
