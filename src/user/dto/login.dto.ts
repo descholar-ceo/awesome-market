@@ -7,11 +7,13 @@ export class LoginDto {
   password: string;
 }
 
+export class AuthTokenDataDto {
+  accessToken: string;
+  refreshToken?: string;
+}
+
 export class LoginResponseDto {
   status: number;
   message: string;
-  data?: {
-    accessToken: string;
-    refreshToken?: string;
-  };
+  data?: AuthTokenDataDto;
 }
