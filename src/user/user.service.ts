@@ -34,6 +34,7 @@ import {
   prepareAccountApprovedMessageBody,
   prepareAccountPendingNotifyBody,
 } from './user.utils';
+import { Role } from '@/role/entities/role.entity';
 
 @Injectable()
 export class UserService {
@@ -52,53 +53,30 @@ export class UserService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+
     try {
-      let newUserRole = BUYER_ROLE_NAME;
-      let newUserData = { ...createUserData, isActive: true };
-      if (userType === SELLER_ROLE_NAME) {
-        newUserRole = SELLER_ROLE_NAME;
-        newUserData = { ...newUserData, isActive: false };
-      }
+      const { newUserRole, newUserData } = this.determineUserRoleAndData(
+        createUserData,
+        userType,
+      );
       const newUser = this.userRepository.create(newUserData);
+
       if (!createUserData?.roles?.length) {
-        let defaultRole = (await this.roleService.findOneByName(newUserRole))
-          ?.data;
-        if (!defaultRole) {
-          defaultRole = (
-            await this.roleService.create(
-              {
-                name: newUserRole,
-              },
-              queryRunner,
-            )
-          )?.data;
-        }
-        newUser.roles = [defaultRole];
+        newUser.roles = [await this.getDefaultRole(newUserRole, queryRunner)];
       }
+
       const savedUser = await queryRunner.manager.save(newUser);
       await queryRunner.commitTransaction();
-      let responseMessage: string = `${statusMessages.CREATED}: You can now login`;
-      if (
-        !!savedUser?.roles
-          ?.map((currRole) => currRole.name)
-          ?.includes(SELLER_ROLE_NAME)
-      ) {
+
+      const responseMessage = this.getResponseMessage(savedUser);
+      if (this.isSeller(savedUser)) {
         await this.sendSellerAccountApprovalEmailToAdmin(savedUser);
-        responseMessage =
-          'Your account has been successfully created and is currently under review. We appreciate your patience and will get back to you shortly. Thank you!';
       }
-      return {
-        status: statusCodes.CREATED,
-        message: responseMessage,
-        data: plainToInstance(User, savedUser, {
-          excludeExtraneousValues: true,
-        }),
-      };
+
+      return this.buildUserResponse(savedUser, responseMessage);
     } catch (err) {
       await queryRunner.rollbackTransaction();
-      if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-        Logger.error(err);
-      }
+      this.logError(err);
       throw new CustomInternalServerErrorException({
         messages: [
           'Something wrong happened while creating your account, try again',
@@ -267,6 +245,56 @@ export class UserService {
     };
   }
 
+  private determineUserRoleAndData(
+    createUserData: CreateUserDto,
+    userType?: string,
+  ): { newUserRole: string; newUserData: CreateUserDto } {
+    const newUserRole =
+      userType === SELLER_ROLE_NAME ? SELLER_ROLE_NAME : BUYER_ROLE_NAME;
+    const newUserData = {
+      ...createUserData,
+      isActive: userType !== SELLER_ROLE_NAME,
+    };
+    return { newUserRole, newUserData };
+  }
+
+  private async getDefaultRole(
+    roleName: string,
+    queryRunner: QueryRunner,
+  ): Promise<Role> {
+    let { data: role } = (await this.roleService.findOneByName(roleName)) ?? {};
+    if (!role) {
+      role = (await this.roleService.create({ name: roleName }, queryRunner))
+        ?.data;
+    }
+    return role;
+  }
+
+  private getResponseMessage(user: User): string {
+    return this.isSeller(user)
+      ? 'Your account has been successfully created and is currently under review. We appreciate your patience and will get back to you shortly. Thank you!'
+      : `${statusMessages.CREATED}: You can now login`;
+  }
+
+  private isSeller(user: User): boolean {
+    return !!user?.roles?.some((role) => role.name === SELLER_ROLE_NAME);
+  }
+
+  private buildUserResponse(user: User, message: string): UserResponseDto {
+    return {
+      status: statusCodes.CREATED,
+      message,
+      data: plainToInstance(User, user, {
+        excludeExtraneousValues: true,
+      }),
+    };
+  }
+
+  private logError(error: any): void {
+    if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+      Logger.error(error);
+    }
+  }
   private async sendSellerAccountApprovalEmailToAdmin(
     savedUser: User,
   ): Promise<void> {
@@ -311,7 +339,7 @@ export class UserService {
         throw new CustomInternalServerErrorException({
           messages: [
             err?.message ??
-              'Something unexpected happened when tryin to send approval Email to admin!',
+              'Something unexpected happened when trying to send approval Email to admin!',
           ],
         });
       }
