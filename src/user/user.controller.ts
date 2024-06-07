@@ -1,64 +1,33 @@
 import { CommonResponseDto } from '@/common/common.dtos';
+import { Roles } from '@/decorators/roles/roles.decorator';
+import { AuthGuard } from '@/guards/auth/auth.guard';
+import { RolesGuard } from '@/guards/roles/roles.guard';
 import { ValidateUniqueUserPipe } from '@/pipes/validate-record-uniqueness/validate-unique-user/validate-unique-user.pipe';
 import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Headers,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-  UsePipes,
-} from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import {
-  FindUserFiltersDto,
-  UserResponseDto,
-  UsersResponseDto,
-} from './dto/find-user.dto';
-import { LoginDto } from './dto/login.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UserService } from './user.service';
-import { Roles } from '@/decorators/roles/roles.decorator';
 import {
   ADMIN_ROLE_NAME,
   BUYER_ROLE_NAME,
   SELLER_ROLE_NAME,
 } from '@/role/role.constants';
-import { AuthGuard } from '@/guards/auth/auth.guard';
-import { RolesGuard } from '@/guards/roles/roles.guard';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Query,
+  UseGuards,
+  UsePipes,
+} from '@nestjs/common';
+import { FindUserFiltersDto, UsersResponseDto } from './dto/find-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserService } from './user.service';
 
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
-
-  @UseGuards(AuthGuard, RolesGuard)
-  @Post()
-  async create(
-    @Body(ValidateUniqueUserPipe) createUserData: CreateUserDto,
-    @Query('user-type') userType?: string,
-  ): Promise<UserResponseDto> {
-    return await this.userService.create(createUserData, userType);
-  }
-
-  @Post('/login')
-  async login(@Body() loginData: LoginDto) {
-    return await this.userService.login(loginData);
-  }
-
-  @Get('/get-new-access-token')
-  async refreshAccessToken(@Headers('authorization') refreshToken: string) {
-    return await this.userService.refreshAccessToken(refreshToken);
-  }
-
-  @Get('/approve-seller-account')
-  async approveSellerAccount(@Query('seller-id') sellerId: string) {
-    return await this.userService.approveSellerAccount(sellerId);
-  }
 
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME, BUYER_ROLE_NAME])
   @Get(':id')
