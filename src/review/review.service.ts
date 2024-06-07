@@ -12,7 +12,7 @@ import { User } from '@/user/entities/user.entity';
 import { ReviewResponseDto } from './dto/find-review.dto';
 import { ProductService } from '@/product/product.service';
 import { UserService } from '@/user/user.service';
-import { statusCodes, statusNames } from '@/common/utils/status.utils';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { plainToInstance } from 'class-transformer';
 import { isUserAdmin } from '@/user/user.utils';
 import { CommonResponseDto } from '@/common/common.dtos';
@@ -40,7 +40,7 @@ export class ReviewService {
     const savedReview = await this.reviewRepository.save(review);
     return {
       status: statusCodes.CREATED,
-      message: statusNames.CREATED,
+      message: statusMessages.CREATED,
       data: plainToInstance(Review, savedReview, {
         excludeExtraneousValues: true,
       }),
@@ -58,7 +58,7 @@ export class ReviewService {
 
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: plainToInstance(Review, review, {
         excludeExtraneousValues: true,
       }),
@@ -106,7 +106,7 @@ export class ReviewService {
     }
     const { affected } = await this.reviewRepository.delete(id);
     if (!!affected) {
-      return { status: statusCodes.OK, message: statusNames.OK };
+      return { status: statusCodes.OK, message: statusMessages.OK };
     }
     return {
       status: statusCodes.INTERNAL_SERVER_ERROR,

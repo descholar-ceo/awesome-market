@@ -1,15 +1,14 @@
 import { CommonResponseDto } from '@/common/common.dtos';
 import { PRODUCTION } from '@/common/constants.common';
-import { statusCodes, statusNames } from '@/common/utils/status.utils';
+import { CustomInternalServerErrorException } from '@/common/exception/custom.exception';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { decodeToken, generateTokens } from '@/common/utils/token.utils';
 import { ConfigService } from '@/config/config.service';
 import {
   API_URL,
   APP_MAILING_ADDRESS,
-  BUYER_ROLE,
   INITIAL_ADMIN_EMAIL,
   NODE_ENV,
-  SELLER_ROLE,
 } from '@/config/config.utils';
 import { MailService } from '@/mail/mail.service';
 import { RoleService } from '@/role/role.service';
@@ -17,9 +16,16 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { plainToInstance } from 'class-transformer';
-import { DeleteResult, FindOneOptions, QueryRunner, Repository } from 'typeorm';
+import {
+  DataSource,
+  DeleteResult,
+  FindOneOptions,
+  QueryRunner,
+  Repository,
+} from 'typeorm';
+import { BUYER_ROLE_NAME, SELLER_ROLE_NAME } from './../role/role.constants';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UserResponseDto } from './dto/find-product.dto';
+import { UserResponseDto } from './dto/find-user.dto';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -36,82 +42,71 @@ export class UserService {
     private readonly roleService: RoleService,
     private readonly config: ConfigService,
     private readonly mailService: MailService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(
     createUserData: CreateUserDto,
     userType?: string,
-  ): Promise<User> {
-    let newUserRole = this.config.get<string>(BUYER_ROLE);
-    const sellerRoleName = this.config.get<string>(SELLER_ROLE);
-    let newUserData = { ...createUserData, isActive: true };
-    if (userType === sellerRoleName) {
-      newUserRole = sellerRoleName;
-      newUserData = { ...newUserData, isActive: false };
-    }
-    const newUser = this.userRepository.create(newUserData);
-    let defaultRole = (
-      await this.roleService.find({
-        name: newUserRole,
-      })
-    )?.[0];
-    if (!defaultRole) {
-      defaultRole = await this.roleService.create({
-        name: newUserRole,
-      });
-    }
-    if (!createUserData?.roles?.length) {
-      newUser.roles = [defaultRole];
-    }
-    const savedUser = await this.userRepository.save(newUser);
-    if (
-      !!savedUser?.roles
-        ?.map((currRole) => currRole.name)
-        ?.includes(sellerRoleName)
-    ) {
-      const adminUser = (
-        await this.findOneBy({
-          where: { email: this.config.get<string>(INITIAL_ADMIN_EMAIL) },
-        })
-      )?.data;
-      if (!!adminUser?.email) {
-        try {
-          const approvalUrl = `${this.config.get<string>(API_URL)}/users/approve-seller-account?seller-id=${savedUser.id}`;
-          const { html, text } = prepareAccountApprovalEmailBody({
-            approvalUrl,
-            admin: adminUser,
-            seller: savedUser,
-          });
-          await this.mailService.sendEmail({
-            fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
-            emailHtmlBody: html,
-            emailTextBody: text,
-            emailSubject:
-              'Account Approval Request for New Seller Registration',
-            personalizations: [{ to: { email: adminUser.email } }],
-          });
-          const { html: pendingHtml, text: pendingText } =
-            prepareAccountPendingNotifyBody({
-              approvalUrl,
-              admin: adminUser,
-              seller: savedUser,
-            });
-          await this.mailService.sendEmail({
-            fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
-            emailHtmlBody: pendingHtml,
-            emailTextBody: pendingText,
-            emailSubject:
-              'Pending Verification and Approval of Your Seller Account',
-            personalizations: [{ to: { email: savedUser.email } }],
-          });
-        } catch (err) {
-          if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-            Logger.error(err);
-          }
-        }
+  ): Promise<UserResponseDto> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      let newUserRole = BUYER_ROLE_NAME;
+      let newUserData = { ...createUserData, isActive: true };
+      if (userType === SELLER_ROLE_NAME) {
+        newUserRole = SELLER_ROLE_NAME;
+        newUserData = { ...newUserData, isActive: false };
       }
+      const newUser = this.userRepository.create(newUserData);
+      if (!createUserData?.roles?.length) {
+        let defaultRole = (await this.roleService.findOneByName(newUserRole))
+          ?.data;
+        if (!defaultRole) {
+          defaultRole = (
+            await this.roleService.create(
+              {
+                name: newUserRole,
+              },
+              queryRunner,
+            )
+          )?.data;
+        }
+        newUser.roles = [defaultRole];
+      }
+      const savedUser = await queryRunner.manager.save(newUser);
+      await queryRunner.commitTransaction();
+      let responseMessage: string = `${statusMessages.CREATED}: You can now login`;
+      if (
+        !!savedUser?.roles
+          ?.map((currRole) => currRole.name)
+          ?.includes(SELLER_ROLE_NAME)
+      ) {
+        await this.sendSellerAccountApprovalEmailToAdmin(savedUser);
+        responseMessage =
+          'Your account has been successfully created and is currently under review. We appreciate your patience and will get back to you shortly. Thank you!';
+      }
+      return {
+        status: statusCodes.CREATED,
+        message: responseMessage,
+        data: plainToInstance(User, savedUser, {
+          excludeExtraneousValues: true,
+        }),
+      };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+        Logger.error(err);
+      }
+      throw new CustomInternalServerErrorException({
+        messages: [
+          'Something wrong happened while creating your account, try again',
+        ],
+      });
+    } finally {
+      await queryRunner.release();
     }
-    return plainToInstance(User, savedUser, { excludeExtraneousValues: true });
   }
 
   async login(loginData: LoginDto): Promise<LoginResponseDto> {
@@ -130,13 +125,13 @@ export class UserService {
       const { accessToken, refreshToken } = await generateTokens(user);
       return {
         status: statusCodes.OK,
-        message: statusNames.OK,
+        message: statusMessages.OK,
         data: { accessToken, refreshToken },
       };
     }
     return {
       status: statusCodes.UNAUTHORIZED,
-      message: statusNames.UNAUTHORIZED,
+      message: statusMessages.UNAUTHORIZED,
     };
   }
 
@@ -162,7 +157,7 @@ export class UserService {
       const { accessToken } = await generateTokens(user);
       return {
         status: statusCodes.OK,
-        message: statusNames.OK,
+        message: statusMessages.OK,
         data: { accessToken },
       };
     } catch (err) {
@@ -214,7 +209,7 @@ export class UserService {
         });
         return {
           status: statusCodes.OK,
-          message: statusNames.OK,
+          message: statusMessages.OK,
         };
       } catch (err) {
         if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
@@ -224,7 +219,7 @@ export class UserService {
     }
     return {
       status: statusCodes.INTERNAL_SERVER_ERROR,
-      message: statusNames.INTERNAL_SERVER_ERROR,
+      message: statusMessages.INTERNAL_SERVER_ERROR,
     };
   }
 
@@ -264,7 +259,7 @@ export class UserService {
   async remove(id: string): Promise<CommonResponseDto> {
     const { affected }: DeleteResult = await this.userRepository.delete(id);
     if (!!affected) {
-      return { status: statusCodes.OK, message: statusNames.OK };
+      return { status: statusCodes.OK, message: statusMessages.OK };
     }
     return {
       status: statusCodes.INTERNAL_SERVER_ERROR,
@@ -272,6 +267,56 @@ export class UserService {
     };
   }
 
+  private async sendSellerAccountApprovalEmailToAdmin(
+    savedUser: User,
+  ): Promise<void> {
+    const adminUser = (
+      await this.findOneBy({
+        where: { email: this.config.get<string>(INITIAL_ADMIN_EMAIL) },
+      })
+    )?.data;
+    if (!!adminUser?.email) {
+      try {
+        const approvalUrl = `${this.config.get<string>(API_URL)}/users/approve-seller-account?seller-id=${savedUser.id}`;
+        const { html, text } = prepareAccountApprovalEmailBody({
+          approvalUrl,
+          admin: adminUser,
+          seller: savedUser,
+        });
+        await this.mailService.sendEmail({
+          fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+          emailHtmlBody: html,
+          emailTextBody: text,
+          emailSubject: 'Account Approval Request for New Seller Registration',
+          personalizations: [{ to: { email: adminUser.email } }],
+        });
+        const { html: pendingHtml, text: pendingText } =
+          prepareAccountPendingNotifyBody({
+            approvalUrl,
+            admin: adminUser,
+            seller: savedUser,
+          });
+        await this.mailService.sendEmail({
+          fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+          emailHtmlBody: pendingHtml,
+          emailTextBody: pendingText,
+          emailSubject:
+            'Pending Verification and Approval of Your Seller Account',
+          personalizations: [{ to: { email: savedUser.email } }],
+        });
+      } catch (err) {
+        if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+          Logger.error(err);
+        }
+        throw new CustomInternalServerErrorException({
+          messages: [
+            err?.message ??
+              'Something unexpected happened when tryin to send approval Email to admin!',
+          ],
+        });
+      }
+    }
+  }
   private async findOneBy(
     whereCondition: FindOneOptions<User>,
     queryRunner?: QueryRunner,
@@ -283,11 +328,14 @@ export class UserService {
       user = await this.userRepository.findOne(whereCondition);
     }
     if (!user) {
-      return { status: statusCodes.NOT_FOUND, message: statusNames.NOT_FOUND };
+      return {
+        status: statusCodes.NOT_FOUND,
+        message: statusMessages.NOT_FOUND,
+      };
     }
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: plainToInstance(User, user, {
         excludeExtraneousValues: true,
       }),

@@ -1,4 +1,4 @@
-import { statusCodes, statusNames } from '@/common/utils/status.utils';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { ExceptionFilter, ExecutionContext } from '@nestjs/common';
 import { Response } from 'express';
 import { BaseException } from './base.exception';
@@ -30,7 +30,7 @@ export abstract class BaseExceptionFilter
         .json({
           message: ['Unhandled Exception'],
           statusCode: statusCodes.INTERNAL_SERVER_ERROR,
-          error: statusNames.INTERNAL_SERVER_ERROR,
+          error: statusMessages.INTERNAL_SERVER_ERROR,
         });
     }
   }

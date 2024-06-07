@@ -1,5 +1,5 @@
 import { CommonResponseDto } from '@/common/common.dtos';
-import { statusCodes, statusNames } from '@/common/utils/status.utils';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { Inventory } from '@/inventory/entities/inventory.entity';
 import { ProductService } from '@/product/product.service';
 import { User } from '@/user/entities/user.entity';
@@ -37,12 +37,12 @@ export class InventoryService {
       await this.findByOwnerIdAndProductId(currUser.id, productId)
     )?.[0];
     let status: number = statusCodes.CREATED;
-    let message: string = statusNames.CREATED;
+    let message: string = statusMessages.CREATED;
     if (!!inventory) {
       inventory.quantity += quantity;
       inventory.updatedBy = currUser;
       status = statusCodes.OK;
-      message = statusNames.OK;
+      message = statusMessages.OK;
     } else {
       inventory = await this.inventoryRepository.create(createInventoryData);
       inventory.product = product;
@@ -104,7 +104,7 @@ export class InventoryService {
     const savedInventory = await this.inventoryRepository.save(inventory);
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: savedInventory,
     };
   }
@@ -134,7 +134,7 @@ export class InventoryService {
     }
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: savedInventory,
     };
   }
@@ -152,7 +152,7 @@ export class InventoryService {
         );
       }
       await this.inventoryRepository.delete(id);
-      return { status: statusCodes.OK, message: statusNames.OK };
+      return { status: statusCodes.OK, message: statusMessages.OK };
     } catch (err) {
       throw new IntersectionObserver(err);
     }
@@ -186,7 +186,7 @@ export class InventoryService {
 
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: plainToInstance(Inventory, inventory, {
         excludeExtraneousValues: true,
       }),

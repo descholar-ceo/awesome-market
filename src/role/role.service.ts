@@ -5,7 +5,7 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { Role } from './entities/role.entity';
 import { plainToInstance } from 'class-transformer';
-import { statusCodes, statusNames } from '@/common/utils/status.utils';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { RoleResponseDto } from './dto/find-role.dto';
 
 @Injectable()
@@ -15,9 +15,22 @@ export class RoleService {
     private readonly roleRepository: Repository<Role>,
   ) {}
 
-  async create(createRoleData: CreateRoleDto) {
+  async create(
+    createRoleData: CreateRoleDto,
+    queryRunner?: QueryRunner,
+  ): Promise<RoleResponseDto> {
     const newRole = this.roleRepository.create(createRoleData);
-    return await this.roleRepository.save(newRole);
+    let savedRole: Role;
+    if (!!queryRunner) {
+      savedRole = await queryRunner.manager.save(newRole);
+    } else {
+      savedRole = await this.roleRepository.save(newRole);
+    }
+    return {
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data: savedRole,
+    };
   }
 
   async findOneByName(
@@ -62,11 +75,14 @@ export class RoleService {
       role = await this.roleRepository.findOne(whereCondition);
     }
     if (!role) {
-      return { status: statusCodes.NOT_FOUND, message: statusNames.NOT_FOUND };
+      return {
+        status: statusCodes.NOT_FOUND,
+        message: statusMessages.NOT_FOUND,
+      };
     }
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: plainToInstance(Role, role, {
         excludeExtraneousValues: true,
       }),

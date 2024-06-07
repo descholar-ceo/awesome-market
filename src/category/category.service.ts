@@ -1,6 +1,6 @@
 import { CommonResponseDto } from '@/common/common.dtos';
 import { getDateInterval } from '@/common/utils/dates.utils';
-import { statusCodes, statusNames } from '@/common/utils/status.utils';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { ConfigService } from '@/config/config.service';
 import { User } from '@/user/entities/user.entity';
 import {
@@ -46,7 +46,7 @@ export class CategoryService {
 
     return {
       status: statusCodes.CREATED,
-      message: statusNames.CREATED,
+      message: statusMessages.CREATED,
       data: category,
     };
   }
@@ -108,7 +108,7 @@ export class CategoryService {
 
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: {
         categories: plainToInstance(Category, categories, {
           excludeExtraneousValues: true,
@@ -135,7 +135,7 @@ export class CategoryService {
 
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: plainToInstance(Category, category, {
         excludeExtraneousValues: true,
       }),
@@ -186,7 +186,7 @@ export class CategoryService {
       };
     }
 
-    return { status: statusCodes.OK, message: statusNames.OK };
+    return { status: statusCodes.OK, message: statusMessages.OK };
   }
 
   private async findOneBy(
@@ -200,11 +200,11 @@ export class CategoryService {
       category = await this.categoryRepository.findOne(whereCondition);
     }
     if (!category) {
-      return { status: statusCodes.NOT_FOUND, message: statusNames.NOT_FOUND };
+      return { status: statusCodes.NOT_FOUND, message: statusMessages.NOT_FOUND };
     }
     return {
       status: statusCodes.OK,
-      message: statusNames.OK,
+      message: statusMessages.OK,
       data: plainToInstance(Category, category, {
         excludeExtraneousValues: true,
       }),

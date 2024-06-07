@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
 import { PRODUCTION } from '@/common/constants.common';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { ConfigService } from '@/config/config.service';
 import {
   ADMIN_ROLE,
@@ -12,10 +12,12 @@ import {
   NODE_ENV,
   SELLER_ROLE,
 } from '@/config/config.utils';
-import { RoleService } from '@/role/role.service';
-import { UserService } from '@/user/user.service';
+import { RoleResponseDto } from '@/role/dto/find-role.dto';
 import { Role } from '@/role/entities/role.entity';
-import { User } from '@/user/entities/user.entity';
+import { RoleService } from '@/role/role.service';
+import { UserResponseDto } from '@/user/dto/find-user.dto';
+import { UserService } from '@/user/user.service';
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class InitService {
@@ -25,7 +27,7 @@ export class InitService {
     private readonly userService: UserService,
   ) {}
 
-  private async createOrFindRole(name: string): Promise<Role> {
+  private async createOrFindRole(name: string): Promise<RoleResponseDto> {
     const role = (await this.roleService.find({ name }))?.[0];
     if (!role) {
       if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
@@ -38,11 +40,14 @@ export class InitService {
           `Initial ${name} role already exists, skipping its initialization...`,
         );
       }
-      return role;
+      return { status: statusCodes.OK, message: statusMessages.OK, data: role };
     }
   }
 
-  private async createOrFindUser(email: string, roles: Role[]): Promise<User> {
+  private async createOrFindUser(
+    email: string,
+    roles: Role[],
+  ): Promise<UserResponseDto> {
     const user = (await this.userService.findOneByEmail(email))?.data;
     if (!user) {
       if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
@@ -62,7 +67,7 @@ export class InitService {
           `Initial ${email} user already exists, skipping its initialization...`,
         );
       }
-      return user;
+      return { status: statusCodes.OK, message: statusMessages.OK, data: user };
     }
   }
 
@@ -71,7 +76,7 @@ export class InitService {
     const buyerRoleName = this.config.get<string>(BUYER_ROLE);
     const sellerRoleName = this.config.get<string>(SELLER_ROLE);
     const adminUserEmail = this.config.get<string>(INITIAL_ADMIN_EMAIL);
-    const adminRole = await this.createOrFindRole(adminRoleName);
+    const adminRole = (await this.createOrFindRole(adminRoleName))?.data;
     await this.createOrFindRole(buyerRoleName);
     await this.createOrFindRole(sellerRoleName);
     await this.createOrFindUser(adminUserEmail, [adminRole]);

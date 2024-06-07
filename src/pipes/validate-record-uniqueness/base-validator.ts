@@ -33,9 +33,7 @@ export class BaseValidator {
     entityName: string;
   }): Promise<void> {
     const passedValue = objectToValidate[uniqueFieldName];
-    const valueFromDb =
-      (await service[findMethodName](passedValue))?.data ??
-      (await service[findMethodName](passedValue));
+    const valueFromDb = (await service[findMethodName](passedValue))?.data;
     if (passedValue && valueFromDb) {
       throw new CustomConflictException({
         messages: [`${entityName} already exists`],
