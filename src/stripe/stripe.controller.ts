@@ -56,13 +56,11 @@ export class StripeController {
   @Post('checkout/webhook')
   async handleStripeWebhook(
     @Req() req: Request,
-    @Res() res: Response,
     @Headers('stripe-signature') stripeSignature: string,
   ) {
     return await this.stripeService.handleStripeWebhook(
       stripeSignature,
       req['rawBody'],
-      res,
     );
   }
 }

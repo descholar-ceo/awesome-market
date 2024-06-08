@@ -1,3 +1,16 @@
+import { CommonResponseDto } from '@/common/common.dtos';
+import { PRODUCTION } from '@/common/constants.common';
+import {
+  CustomBadRequest,
+  CustomConflictException,
+  CustomForbiddenException,
+  CustomInternalServerErrorException,
+  CustomNotFoundException,
+  CustomUnauthorizedException,
+} from '@/common/exception/custom.exception';
+import { UUID_REGEX_FROM_ORDERS_URL } from '@/common/utils/regex.utils';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
+import { decodeToken } from '@/common/utils/token.utils';
 import { ConfigService } from '@/config/config.service';
 import {
   APP_MAILING_ADDRESS,
@@ -5,28 +18,15 @@ import {
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
 } from '@/config/config.utils';
+import { MailService } from '@/mail/mail.service';
+import { Order } from '@/order/entities/order.entity';
+import { orderStatuses, paymentStatuses } from '@/order/order.constants';
 import { OrderService } from '@/order/order.service';
-import {
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { prepareOrderSuccessPaymentEmailBody } from '@/order/order.utils';
+import { User } from '@/user/entities/user.entity';
+import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { StripProductLineDto } from './stripe.dto';
-import { CommonResponseDto } from '@/common/common.dtos';
-import { statusCodes, statusMessages } from '@/common/utils/status.utils';
-import { Response } from 'express';
-import { UUID_REGEX_FROM_ORDERS_URL } from '@/common/utils/regex.utils';
-import { PRODUCTION } from '@/common/constants.common';
-import { orderStatuses, paymentStatuses } from '@/order/order.constants';
-import { MailService } from '@/mail/mail.service';
-import { prepareOrderSuccessPaymentEmailBody } from '@/order/order.utils';
-import { Order } from '@/order/entities/order.entity';
-import { decodeToken } from '@/common/utils/token.utils';
-import { User } from '@/user/entities/user.entity';
 
 @Injectable()
 export class StripeService {
@@ -47,37 +47,32 @@ export class StripeService {
     cancelUrl: string,
     token: string,
   ): Promise<Stripe.Checkout.Session | CommonResponseDto> {
-    if (!token) {
-      return {
-        status: statusCodes.UNAUTHORIZED,
-        message: statusMessages.UNAUTHORIZED,
-      };
-    }
+    if (!token) throw new CustomUnauthorizedException();
     let user: User;
     try {
       user = decodeToken(token);
       if (!user) {
-        throw new UnauthorizedException(
-          "token is invalid, we couldn't process your payment",
-        );
+        throw new CustomUnauthorizedException({
+          messages: ["Invalid token, we couldn't process your payment"],
+        });
       }
     } catch (err) {
-      if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-        Logger.error(err);
-      }
-      throw new UnauthorizedException(
-        "token is invalid, we couldn't process your payment",
-      );
+      this.logError(err);
+      throw new CustomUnauthorizedException();
     }
-    const order = (await this.orderService.findById(orderId))?.data;
+    const { data: order } = (await this.orderService.findById(orderId)) ?? {};
     if (!order) {
-      throw new NotFoundException('Order not found');
+      throw new CustomNotFoundException({ messages: ['Order Not Found'] });
     }
     if (order.buyer.id !== user.id) {
-      throw new ForbiddenException('Order seems to be not yours!');
+      throw new CustomForbiddenException({
+        messages: ['Order does not belong to you!'],
+      });
     }
     if (order.paymentStatus === paymentStatuses.PAID) {
-      throw new ConflictException('You have already paid for this order');
+      throw new CustomConflictException({
+        messages: ['You have already paid for this order'],
+      });
     }
     const products: StripProductLineDto[] = order.orderItems.map(
       (currItem) => ({
@@ -125,36 +120,34 @@ export class StripeService {
   }
 
   async handleStripeWebhook(
-    signature: any,
+    signature: string,
     body: Buffer,
-    res: Response,
-  ): Promise<Response> {
+  ): Promise<CommonResponseDto> {
     const endpointSecret = this.config.get<string>(STRIPE_WEBHOOK_SECRET);
     let event: Stripe.Event;
     try {
       event = this.constructEvent(body, signature, endpointSecret);
     } catch (err) {
-      Logger.error(`Webhook signature verification failed.`, err.message);
-      return res
-        .status(statusCodes.BAD_REQUEST)
-        .send(`Webhook Error: ${err.message}`);
+      this.logError(err);
+      throw new CustomBadRequest({
+        messages: [`Webhook Error: ${err.message}`],
+      });
     }
 
     const session = event.data.object as Stripe.Checkout.Session;
     switch (event.type) {
       case 'checkout.session.completed':
-        await this.handleCheckoutSessionCompleted(session, res);
-        break;
+        return await this.handleCheckoutSessionCompleted(session);
       case 'checkout.session.async_payment_failed':
-        await this.handleCheckoutSessionFailed(session, res);
-        break;
+        return await this.handleCheckoutSessionFailed(session);
       default:
-        Logger.error(`Unhandled event type ${event.type}`);
+        this.logError(`Unhandled event type ${event.type}`);
+        throw new CustomBadRequest();
     }
   }
   private constructEvent(
     payload: Buffer,
-    sig: string | string[],
+    sig: string,
     secret: string,
   ): Stripe.Event {
     return this.stripe.webhooks.constructEvent(payload, sig, secret);
@@ -162,30 +155,27 @@ export class StripeService {
 
   private async handleCheckoutSessionCompleted(
     session: Stripe.Checkout.Session,
-    res: Response,
-  ) {
+  ): Promise<CommonResponseDto> {
     const orderId = this.extractOrderId(session.success_url);
     if (!orderId) {
-      return this.handleError(
-        res,
-        statusCodes.BAD_REQUEST,
-        `${statusMessages.BAD_REQUEST}: Missing order id from the success url`,
-        'There was no order id from the success url sent from stripe',
-      );
+      throw new CustomBadRequest({
+        messages: [
+          `${statusMessages.BAD_REQUEST}: Missing order id from the success url`,
+        ],
+      });
     }
 
-    const order = await this.findOrderById(orderId, res);
-    if (!order) return;
-
     try {
-      const updatedOrder = await this.orderService.update(
-        orderId,
-        {
-          status: orderStatuses.PROCESSING,
-          paymentStatus: paymentStatuses.PAID,
-        },
-        order.buyer,
-      );
+      const order = await this.findOrderById(orderId);
+      const { data: updatedOrder } =
+        (await this.orderService.update(
+          orderId,
+          {
+            status: orderStatuses.PROCESSING,
+            paymentStatus: paymentStatuses.PAID,
+          },
+          order.buyer,
+        )) ?? {};
 
       if (!!updatedOrder) {
         const { html, text } = prepareOrderSuccessPaymentEmailBody({ order });
@@ -196,39 +186,37 @@ export class StripeService {
           emailHtmlBody: html,
           emailTextBody: text,
         });
-        return res.status(statusCodes.OK).send(statusMessages.OK);
+        return { status: statusCodes.OK, message: statusMessages.OK };
       }
     } catch (err) {
-      this.handleInternalError(err, res);
+      this.logError(err);
+      throw new CustomInternalServerErrorException();
     }
   }
 
   private async handleCheckoutSessionFailed(
     session: Stripe.Checkout.Session,
-    res: Response,
-  ) {
+  ): Promise<CommonResponseDto> {
     const orderId = this.extractOrderId(session.cancel_url);
     if (!orderId) {
-      return this.handleError(
-        res,
-        statusCodes.BAD_REQUEST,
-        `${statusMessages.BAD_REQUEST}: Missing order id from the cancel url`,
-        'There was no order id from the cancel url sent from stripe',
-      );
+      throw new CustomBadRequest({
+        messages: [
+          `${statusMessages.BAD_REQUEST}: Missing order id from the cancel url`,
+        ],
+      });
     }
 
-    const order = await this.findOrderById(orderId, res);
-    if (!order) return;
-
     try {
+      const order = await this.findOrderById(orderId);
       await this.orderService.update(
         orderId,
         { paymentStatus: paymentStatuses.FAILED },
         order.buyer,
       );
-      return res.status(statusCodes.OK).send(statusMessages.OK);
+      return { status: statusCodes.OK, message: statusMessages.OK };
     } catch (err) {
-      this.handleInternalError(err, res);
+      this.logError(err);
+      throw new CustomInternalServerErrorException();
     }
   }
 
@@ -237,37 +225,18 @@ export class StripeService {
     return match?.length ? match[1] : null;
   }
 
-  private async findOrderById(
-    orderId: string,
-    res: Response,
-  ): Promise<Order | null> {
-    const order = (await this.orderService.findById(orderId))?.data;
+  private async findOrderById(orderId: string): Promise<Order> {
+    const { data: order } = (await this.orderService.findById(orderId)) ?? {};
     if (!order) {
-      res
-        .status(statusCodes.NOT_FOUND)
-        .send(`${statusMessages.NOT_FOUND}: Order not found!`);
+      throw new CustomNotFoundException({
+        messages: [`${statusMessages.NOT_FOUND}: Order not found!`],
+      });
     }
     return order;
   }
-
-  private handleError(
-    res: Response,
-    statusCode: number,
-    message: string,
-    logMessage?: string,
-  ) {
-    if (this.config.get<string>(NODE_ENV) !== PRODUCTION && logMessage) {
-      Logger.error(logMessage);
-    }
-    return res.status(statusCode).send(message);
-  }
-
-  private handleInternalError(err: any, res: Response) {
-    if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+  private logError(err: any): void {
+    if (this.config.get<string>(NODE_ENV) !== PRODUCTION && err) {
       Logger.error(err);
     }
-    return res
-      .status(statusCodes.INTERNAL_SERVER_ERROR)
-      .send(statusMessages.INTERNAL_SERVER_ERROR);
   }
 }
