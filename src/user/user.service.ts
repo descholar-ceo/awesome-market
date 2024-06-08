@@ -114,6 +114,7 @@ export class UserService {
         const { accessToken, refreshToken } = await generateTokens(user);
         return await this.buildTokenResponse({ accessToken, refreshToken });
       }
+      this.throwUnauthorizedError();
     } catch (err) {
       this.logError(err);
       this.throwUnauthorizedError();
