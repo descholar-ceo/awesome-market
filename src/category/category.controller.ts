@@ -49,7 +49,7 @@ export class CategoryController {
   @Get(':id')
   @UsePipes(new ValidateIdFromParam())
   async findById(@Param('id') id: string): Promise<CategoryResponseDto> {
-    return await this.categoryService.findById(id);
+    return await this.categoryService.findOneById(id);
   }
 
   @Patch(':id')
