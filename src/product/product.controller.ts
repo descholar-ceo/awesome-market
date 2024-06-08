@@ -4,7 +4,6 @@ import { Roles } from '@/decorators/roles/roles.decorator';
 import { AuthGuard } from '@/guards/auth/auth.guard';
 import { RolesGuard } from '@/guards/roles/roles.guard';
 import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
-import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
 import { ADMIN_ROLE_NAME, SELLER_ROLE_NAME } from '@/role/role.constants';
 import { User } from '@/user/entities/user.entity';
 import {
@@ -49,7 +48,7 @@ export class ProductController {
   }
 
   @Get(':id')
-  @UsePipes(new ValidateUuidPipe())
+  @UsePipes(new ValidateIdFromParam())
   findById(@Param('id') id: string) {
     return this.productService.findById(id);
   }
