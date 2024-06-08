@@ -40,7 +40,7 @@ export class AuthGuard implements CanActivate {
 
   private throwUnauthorizedError(): void {
     throw new CustomUnauthorizedException({
-      messages: [`${statusMessages.UNAUTHORIZED}: Invalid Credentials`],
+      messages: [`${statusMessages.UNAUTHORIZED}: You need to login`],
     });
   }
 }
