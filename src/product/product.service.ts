@@ -34,8 +34,8 @@ export class ProductService {
     currUser: User,
   ): Promise<ProductResponseDto> {
     const { categoryId } = createProductData;
-    const category = (await this.categoryService.findById(categoryId))?.data;
-    if (!category) throw new NotFoundException('Category not found');
+    const { data: category } =
+      (await this.categoryService.findOneById(categoryId)) ?? {};
     const newProduct = this.productRepository.create(createProductData);
     newProduct.category = category;
     newProduct.createdBy = currUser;
@@ -180,8 +180,8 @@ export class ProductService {
     let affectedRows: number;
     const { categoryId, ...updatedData } = updateProductData;
     if (!!updateProductData.categoryId) {
-      const category = (await this.categoryService.findById(categoryId))?.data;
-      if (!category) throw new NotFoundException('Category not found');
+      const { data: category } =
+        (await this.categoryService.findOneById(categoryId)) ?? {};
       product.category = category;
       affectedRows = 1;
     }
