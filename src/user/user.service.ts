@@ -296,7 +296,7 @@ export class UserService {
 
   private throwUnauthorizedError(): void {
     throw new CustomUnauthorizedException({
-      messages: [`${statusCodes.UNAUTHORIZED}: Invalid Credentials`],
+      messages: [`${statusMessages.UNAUTHORIZED}: Invalid Credentials`],
     });
   }
   private determineUserRoleAndData(

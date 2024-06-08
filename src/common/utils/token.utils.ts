@@ -10,6 +10,8 @@ import {
   validateEnvironment,
 } from '@/config/config.utils';
 import { User } from '@/user/entities/user.entity';
+import { CustomBadRequest } from '../exception/custom.exception';
+import { statusMessages } from './status.utils';
 
 const envConfigure = validateEnvironment(dotenvConfig);
 
@@ -54,7 +56,7 @@ export const generateTokens = async (
   const { id, roles } = user;
 
   switch (tokenType) {
-    case 'auth':
+    case 'auth': {
       const accessTokenData = {
         id,
         roles: (roles ?? []).map((currRole) => currRole.name) ?? [],
@@ -69,16 +71,21 @@ export const generateTokens = async (
         getEnvironmentValue<string>(envConfigure, REFRESH_JWT_EXPIRES),
       );
       return { accessToken, refreshToken };
+    }
 
-    case 'otherTokens':
+    case 'otherTokens': {
       const otherTokenData = { id };
       const otherToken = await encodeToken(
         otherTokenData,
         getEnvironmentValue<string>(envConfigure, GENERAL_JWT_EXPIRES),
       );
       return { otherToken };
+    }
 
-    default:
-      throw new Error('Invalid tokenType');
+    default: {
+      throw new CustomBadRequest({
+        messages: [`${statusMessages.BAD_REQUEST}: Invalid tokenType`],
+      });
+    }
   }
 };

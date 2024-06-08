@@ -19,7 +19,7 @@ export class CustomNotFoundException extends BaseException {
 }
 export class CustomUnauthorizedException extends BaseException {
   constructor({ messages }: ResponseErrorMessageDto = null) {
-    super(statusCodes.NOT_FOUND, messages, statusMessages.NOT_FOUND);
+    super(statusCodes.UNAUTHORIZED, messages, statusMessages.UNAUTHORIZED);
   }
 }
 export class CustomInternalServerErrorException extends BaseException {
