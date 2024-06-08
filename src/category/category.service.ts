@@ -200,7 +200,10 @@ export class CategoryService {
       category = await this.categoryRepository.findOne(whereCondition);
     }
     if (!category) {
-      return { status: statusCodes.NOT_FOUND, message: statusMessages.NOT_FOUND };
+      return {
+        status: statusCodes.NOT_FOUND,
+        message: statusMessages.NOT_FOUND,
+      };
     }
     return {
       status: statusCodes.OK,
