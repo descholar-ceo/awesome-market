@@ -1,17 +1,14 @@
-import { CommonResponseDto } from '@/common/common.dtos';
+import {
+  CustomForbiddenException,
+  CustomNotFoundException,
+} from '@/common/exception/custom.exception';
 import { getDateInterval } from '@/common/utils/dates.utils';
 import { statusCodes, statusMessages } from '@/common/utils/status.utils';
-import { ConfigService } from '@/config/config.service';
 import { User } from '@/user/entities/user.entity';
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import {
-  DeleteResult,
   FindOneOptions,
   QueryRunner,
   Repository,
@@ -32,7 +29,6 @@ export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
-    private readonly config: ConfigService,
   ) {}
 
   async create(
@@ -88,10 +84,7 @@ export class CategoryService {
 
     const totalRecords = await findCategoriesQuery.getCount();
     if (totalRecords === 0) {
-      return {
-        status: statusCodes.NOT_FOUND,
-        message: 'No records found',
-      };
+      throw new CustomNotFoundException({ messages: ['No records found'] });
     }
     const page =
       isNaN(pageNumber) || Number(pageNumber) < 1 ? 1 : Number(pageNumber);
@@ -123,16 +116,11 @@ export class CategoryService {
     };
   }
 
-  async findById(id: string): Promise<CategoryResponseDto> {
-    const category = await this.categoryRepository.findOne({
+  async findOneById(id: string): Promise<CategoryResponseDto> {
+    const { data: category } = await this.findOneBy({
       where: { id },
       relations: ['createdBy', 'updatedBy'],
     });
-
-    if (!category) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
-    }
-
     return {
       status: statusCodes.OK,
       message: statusMessages.OK,
@@ -147,46 +135,36 @@ export class CategoryService {
     updateCategoryData: UpdateCategoryDto,
     currUser: User,
   ): Promise<CategoryResponseDto> {
-    const category = (await this.findById(id))?.data;
-    if (!category) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
-    }
-
+    const { data: category } = (await this.findOneById(id)) ?? {};
     if (!isUserAdmin(currUser) && category.createdBy.id !== currUser.id) {
-      throw new ForbiddenException(
-        'You cannot update a category that you did not create',
-      );
+      throw new CustomForbiddenException({
+        messages: ['You cannot update a category that you did not create'],
+      });
     }
     category.updatedBy = currUser;
     Object.assign(category, updateCategoryData);
-    const { affected } = await this.categoryRepository.update(id, category);
-
-    if (!!affected) {
-      return await this.findById(id);
-    }
+    const categoryRes = await this.categoryRepository.save(category);
+    return {
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data: categoryRes,
+    };
   }
 
-  async remove(id: string, currUser: User): Promise<CommonResponseDto> {
-    const category = await this.findById(id);
-    if (!category) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
-    }
+  async remove(id: string, currUser: User): Promise<CategoryResponseDto> {
+    const { data: category } = (await this.findOneById(id)) ?? {};
 
-    if (!isUserAdmin(currUser) && category.data.createdBy.id !== currUser.id) {
-      throw new ForbiddenException(
-        'You cannot delete a category that you did not create',
-      );
+    if (!isUserAdmin(currUser) && category.createdBy.id !== currUser.id) {
+      throw new CustomForbiddenException({
+        messages: ['You cannot delete a category that you did not create'],
+      });
     }
-
-    const deleteResult: DeleteResult = await this.categoryRepository.delete(id);
-    if (!deleteResult.affected) {
-      return {
-        status: statusCodes.INTERNAL_SERVER_ERROR,
-        message: 'Something went wrong, try again',
-      };
-    }
-
-    return { status: statusCodes.OK, message: statusMessages.OK };
+    await this.categoryRepository.delete(id);
+    return {
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data: category,
+    };
   }
 
   private async findOneBy(
@@ -199,12 +177,7 @@ export class CategoryService {
     } else {
       category = await this.categoryRepository.findOne(whereCondition);
     }
-    if (!category) {
-      return {
-        status: statusCodes.NOT_FOUND,
-        message: statusMessages.NOT_FOUND,
-      };
-    }
+    if (!category) throw new CustomNotFoundException();
     return {
       status: statusCodes.OK,
       message: statusMessages.OK,
