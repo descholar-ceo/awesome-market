@@ -1,4 +1,6 @@
 import { PRODUCTION } from '@/common/constants.common';
+import { CustomUnauthorizedException } from '@/common/exception/custom.exception';
+import { statusMessages } from '@/common/utils/status.utils';
 import { decodeToken } from '@/common/utils/token.utils';
 import { ConfigService } from '@/config/config.service';
 import { NODE_ENV } from '@/config/config.utils';
@@ -7,7 +9,6 @@ import {
   ExecutionContext,
   Injectable,
   Logger,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 
@@ -21,21 +22,25 @@ export class AuthGuard implements CanActivate {
     const {
       headers: { authorization },
     } = request ?? {};
-    if (!authorization) {
-      throw new UnauthorizedException('Login first');
-    }
+    if (!authorization) this.throwUnauthorizedError();
     try {
       const user = decodeToken(authorization);
       if (!!user) {
         request.user = user;
         return true;
       }
-      throw new UnauthorizedException('Login first');
+      this.throwUnauthorizedError();
     } catch (err) {
       if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
         Logger.error(err);
       }
-      throw new UnauthorizedException('Login first');
+      this.throwUnauthorizedError();
     }
+  }
+
+  private throwUnauthorizedError(): void {
+    throw new CustomUnauthorizedException({
+      messages: [`${statusMessages.UNAUTHORIZED}: Invalid Credentials`],
+    });
   }
 }
