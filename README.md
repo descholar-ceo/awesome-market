@@ -156,14 +156,14 @@ Host: localhost:[HOST_PORT]
 Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 ##### Refresh Token Endpoint
-The `/get-new-access-token` endpoint allows you to obtain a new access token using a refresh token without requiring the user to re-login. This is useful when the access token expires before the refresh token.
+The `/auth/get-new-access-token` endpoint allows you to obtain a new access token using a refresh token without requiring the user to re-login. This is useful when the access token expires before the refresh token.
 1. Set the following environment variables to configure token expiration times:
     - `REFRESH_JWT_EXPIRES`: The expiration time for the refresh token (e.g., 7d for 7 days).
     - `ACCESS_JWT_EXPIRES`: The expiration time for the access token (e.g., 15m for 15 minutes).
 2. Using the `/get-new-access-token` Endpoint:
 To get a new access token, send a GET request to the `/get-new-access-token` endpoint with the refresh token included in the headers:
 ```http
-GET /get-new-access-token HTTP/1.1
+GET /auth/get-new-access-token HTTP/1.1
 Host: localhost:[HOST_PORT]
 Authorization: Bearer YOUR_REFRESH_TOKEN
 ```
