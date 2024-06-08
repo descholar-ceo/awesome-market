@@ -1,5 +1,9 @@
-import { orderStatuses, paymentStatuses } from './order.constants';
 import { PRODUCTION } from '@/common/constants.common';
+import {
+  CustomBadRequest,
+  CustomInternalServerErrorException,
+  CustomNotFoundException,
+} from '@/common/exception/custom.exception';
 import { getDateInterval } from '@/common/utils/dates.utils';
 import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { ConfigService } from '@/config/config.service';
@@ -9,10 +13,10 @@ import { MailService } from '@/mail/mail.service';
 import { OrderItemService } from '@/order-item/order-item.service';
 import { User } from '@/user/entities/user.entity';
 import { UserService } from '@/user/user.service';
+import { isUserAdmin } from '@/user/user.utils';
 import {
   ForbiddenException,
   Injectable,
-  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -25,14 +29,14 @@ import {
   OrderResponseDto,
   OrdersResponseDto,
 } from './dto/find-order.dto';
+import { UpdateOrderDto } from './dto/update-order.dto';
 import { Order } from './entities/order.entity';
+import { orderStatuses, paymentStatuses } from './order.constants';
 import {
   prepareOrderDeliveredEmailBody,
   prepareOrderPendingNotificationEmailBody,
   prepareOrderShippedEmailBody,
 } from './order.utils';
-import { UpdateOrderDto } from './dto/update-order.dto';
-import { isUserAdmin } from '@/user/user.utils';
 
 @Injectable()
 export class OrderService {
@@ -55,58 +59,49 @@ export class OrderService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const buyer = (
-        await this.userService.findOneById(currUser.id, queryRunner)
-      )?.data;
+      const { data: buyer } =
+        (await this.userService.findOneById(currUser.id, queryRunner)) ?? {};
       const newOrder = await this.orderRepository.create({
         buyer,
         updatedBy: buyer,
       });
       for (const currData of createOrderData) {
         const { inventoryId, quantity } = currData;
-        const inventory = (
-          await this.inventoryService.findOneByIdWithoutAssociations(
-            inventoryId,
-            queryRunner,
-          )
-        )?.data;
+        const { data: inventory } =
+          (await this.inventoryService.findOneById(inventoryId, queryRunner)) ??
+          {};
         if (inventory?.quantity < quantity) {
-          return {
-            status: statusCodes.BAD_REQUEST,
-            message: `The ordered quantity is greater than the available stock`,
-          };
+          throw new CustomBadRequest({
+            messages: [
+              'The ordered quantity is greater than the available stock',
+            ],
+          });
         }
         await queryRunner.manager.save(newOrder);
-        const orderItem = await this.orderItemService.create(
+        await this.orderItemService.create(
           { order: newOrder, inventory, quantity },
           queryRunner,
         );
-        if (!!orderItem) {
-          await this.inventoryService.decreaseInventory(
-            inventory.id,
-            { quantity: currData.quantity },
-            currUser,
-            queryRunner,
-          );
-        } else {
-          throw new InternalServerErrorException('Order Item not created!');
-        }
+        await this.inventoryService.decreaseInventory(
+          inventory.id,
+          { quantity: currData.quantity },
+          currUser,
+          queryRunner,
+        );
       }
       await queryRunner.commitTransaction();
-      const createdOrder = (await this.findById(newOrder.id))?.data;
-      if (!!createdOrder) {
-        const { html, text } = await prepareOrderPendingNotificationEmailBody({
-          order: createdOrder,
-          apiUrl: this.config.get<string>(API_URL),
-        });
-        await this.mailService.sendEmail({
-          fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
-          emailSubject: `[Action Required]: Your Order Confirmation - ${createdOrder.code}`,
-          emailHtmlBody: html,
-          emailTextBody: text,
-          personalizations: [{ to: { email: createdOrder.buyer.email } }],
-        });
-      }
+      const { data: createdOrder } = (await this.findById(newOrder.id)) ?? {};
+      const { html, text } = await prepareOrderPendingNotificationEmailBody({
+        order: createdOrder,
+        apiUrl: this.config.get<string>(API_URL),
+      });
+      await this.mailService.sendEmail({
+        fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+        emailSubject: `[Action Required]: Your Order Confirmation - ${createdOrder.code}`,
+        emailHtmlBody: html,
+        emailTextBody: text,
+        personalizations: [{ to: { email: createdOrder.buyer.email } }],
+      });
       return {
         status: statusCodes.CREATED,
         message: `${statusMessages.CREATED}: We have sent you an email that contains payment info`,
@@ -119,10 +114,7 @@ export class OrderService {
         Logger.error(err);
       }
       await queryRunner.rollbackTransaction();
-      return {
-        status: statusCodes.INTERNAL_SERVER_ERROR,
-        message: 'Something went wrong',
-      };
+      throw new CustomInternalServerErrorException();
     } finally {
       await queryRunner.release();
     }
@@ -208,7 +200,7 @@ export class OrderService {
     });
 
     if (!order) {
-      throw new NotFoundException(`Order with ID ${id} not found`);
+      throw new CustomNotFoundException({ messages: [`Order Not Found`] });
     }
 
     return {
