@@ -1,14 +1,13 @@
 import { CategoryService } from '@/category/category.service';
-import { CommonResponseDto } from '@/common/common.dtos';
+import {
+  CustomForbiddenException,
+  CustomNotFoundException,
+} from '@/common/exception/custom.exception';
 import { getDateInterval } from '@/common/utils/dates.utils';
 import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { User } from '@/user/entities/user.entity';
 import { isUserAdmin } from '@/user/user.utils';
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Repository, SelectQueryBuilder } from 'typeorm';
@@ -92,10 +91,7 @@ export class ProductService {
 
     const totalRecords = await findProductsQuery.getCount();
     if (totalRecords === 0) {
-      return {
-        status: statusCodes.NOT_FOUND,
-        message: 'No records found',
-      };
+      throw new CustomNotFoundException({ messages: ['No records found'] });
     }
     const page =
       isNaN(pageNumber) || Number(pageNumber) < 1 ? 1 : Number(pageNumber);
@@ -150,7 +146,7 @@ export class ProductService {
     });
 
     if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+      throw new CustomNotFoundException({ messages: [`Product Not Found`] });
     }
 
     return {
@@ -167,54 +163,42 @@ export class ProductService {
     updateProductData: UpdateProductDto,
     currUser: User,
   ): Promise<ProductResponseDto> {
-    const product = (await this.findById(id))?.data;
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
-    }
+    const { data: product } = (await this.findById(id)) ?? {};
 
     if (!isUserAdmin(currUser) && product.createdBy.id !== currUser.id) {
-      throw new ForbiddenException(
-        'You cannot update a product that you did not create',
-      );
+      throw new CustomForbiddenException({
+        messages: ['You cannot update a product that you did not create'],
+      });
     }
-    let affectedRows: number;
     const { categoryId, ...updatedData } = updateProductData;
     if (!!updateProductData.categoryId) {
       const { data: category } =
         (await this.categoryService.findOneById(categoryId)) ?? {};
       product.category = category;
-      affectedRows = 1;
     }
     Object.assign(product, { ...updatedData });
     product.updatedBy = currUser;
-    const { affected } = await this.productRepository.update(id, product);
-    if (!!affected || !!affectedRows) {
-      return await this.findById(id);
-    }
+    const data = await this.productRepository.save(product);
     return {
-      status: statusCodes.INTERNAL_SERVER_ERROR,
-      message: 'Nothing updated',
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data,
     };
   }
 
-  async remove(id: string, currUser: User): Promise<CommonResponseDto> {
-    const product = await this.findById(id);
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+  async remove(id: string, currUser: User): Promise<ProductResponseDto> {
+    const { data: product } = (await this.findById(id)) ?? {};
+    if (!isUserAdmin(currUser) && product.createdBy.id !== currUser.id) {
+      throw new CustomForbiddenException({
+        messages: ['You cannot delete a product that you did not create'],
+      });
     }
+    await this.productRepository.delete(id);
 
-    if (!isUserAdmin(currUser) && product.data.createdBy.id !== currUser.id) {
-      throw new ForbiddenException(
-        'You cannot delete a product that you did not create',
-      );
-    }
-    const { affected } = await this.productRepository.delete(id);
-    if (!!affected) {
-      return { status: statusCodes.OK, message: statusMessages.OK };
-    }
     return {
-      status: statusCodes.INTERNAL_SERVER_ERROR,
-      message: 'Something went wrong, try again',
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data: product,
     };
   }
 
