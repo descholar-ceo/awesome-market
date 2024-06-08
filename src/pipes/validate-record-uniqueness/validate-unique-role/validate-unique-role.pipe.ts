@@ -3,14 +3,18 @@ import { BaseValidator } from '../base-validator';
 import { RoleService } from '@/role/role.service';
 import { UpdateRoleDto } from '@/role/dto/update-role.dto';
 import { CreateRoleDto } from '@/role/dto/create-role.dto';
+import { ConfigService } from '@/config/config.service';
 
 @Injectable()
 export class ValidateUniqueRolePipe
   extends BaseValidator
   implements PipeTransform
 {
-  constructor(private readonly categoryService: RoleService) {
-    super();
+  constructor(
+    private readonly categoryService: RoleService,
+    readonly config: ConfigService,
+  ) {
+    super(config);
   }
   async transform(
     value: CreateRoleDto | UpdateRoleDto,

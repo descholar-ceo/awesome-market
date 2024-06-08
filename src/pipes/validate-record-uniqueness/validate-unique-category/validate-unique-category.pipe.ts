@@ -3,14 +3,18 @@ import { CreateCategoryDto } from '@/category/dto/create-category.dto';
 import { UpdateCategoryDto } from '@/category/dto/update-category.dto';
 import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
 import { BaseValidator } from '../base-validator';
+import { ConfigService } from '@/config/config.service';
 
 @Injectable()
 export class ValidateUniqueCategoryPipe
   extends BaseValidator
   implements PipeTransform
 {
-  constructor(private readonly categoryService: CategoryService) {
-    super();
+  constructor(
+    private readonly categoryService: CategoryService,
+    readonly config: ConfigService,
+  ) {
+    super(config);
   }
   async transform(
     value: CreateCategoryDto | UpdateCategoryDto,
