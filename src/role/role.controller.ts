@@ -42,7 +42,7 @@ export class RoleController {
   @UsePipes(new ValidateIdFromParam())
   @Get(':id')
   findById(@Param('id') id: string) {
-    return this.roleService.findById(id);
+    return this.roleService.findOneById(id);
   }
 
   @Roles([ADMIN_ROLE_NAME])

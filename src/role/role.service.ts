@@ -51,7 +51,7 @@ export class RoleService {
     return await this.findOneBy({ where: { name } }, queryRunner);
   }
 
-  async findById(id: string): Promise<RoleResponseDto> {
+  async findOneById(id: string): Promise<RoleResponseDto> {
     return await this.findOneBy({ where: { id }, relations: ['users'] });
   }
 
@@ -117,9 +117,6 @@ export class RoleService {
     updateRoleData: UpdateRoleDto,
   ): Promise<RoleResponseDto> {
     const { data: role } = (await this.findOneBy({ where: { id } })) ?? {};
-    if (!role) {
-      throw new CustomNotFoundException({ messages: ['Role Not Found'] });
-    }
     Object.assign(role, updateRoleData);
     const savedRole = await this.roleRepository.save(role);
     return {
@@ -147,7 +144,7 @@ export class RoleService {
     }
     if (!role) {
       throw new CustomNotFoundException({
-        messages: [statusMessages.NOT_FOUND],
+        messages: ['Role Not Found'],
       });
     }
     return {
