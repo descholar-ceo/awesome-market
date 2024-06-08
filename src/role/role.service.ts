@@ -52,7 +52,7 @@ export class RoleService {
   }
 
   async findById(id: string): Promise<RoleResponseDto> {
-    return await this.findOneBy({ where: { id } });
+    return await this.findOneBy({ where: { id }, relations: ['users'] });
   }
 
   async findWithFilters(
