@@ -76,7 +76,7 @@ export class StripeService {
     }
     const products: StripProductLineDto[] = order.orderItems.map(
       (currItem) => ({
-        name: currItem.inventory.product.name,
+        name: `${currItem.inventory.product.name} #${currItem.inventory.product.code}`,
         amount: currItem.inventory.product.unitPrice,
         currency: order.buyer.currency,
         quantity: currItem.quantity,
