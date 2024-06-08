@@ -1,27 +1,26 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UsePipes,
-  UseGuards,
-} from '@nestjs/common';
-import { ReviewService } from './review.service';
-import { CreateReviewDto } from './dto/create-review.dto';
-import { UpdateReviewDto } from './dto/update-review.dto';
+import { CommonResponseDto } from '@/common/common.dtos';
+import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
 import { Roles } from '@/decorators/roles/roles.decorator';
-import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
-import { ADMIN_ROLE_NAME, SELLER_ROLE_NAME } from '@/role/role.constants';
 import { AuthGuard } from '@/guards/auth/auth.guard';
 import { RolesGuard } from '@/guards/roles/roles.guard';
-import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
-import { User } from '@/user/entities/user.entity';
-import { ReviewResponseDto } from './dto/find-review.dto';
 import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
-import { CommonResponseDto } from '@/common/common.dtos';
+import { ADMIN_ROLE_NAME, SELLER_ROLE_NAME } from '@/role/role.constants';
+import { User } from '@/user/entities/user.entity';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+  UsePipes,
+} from '@nestjs/common';
+import { CreateReviewDto } from './dto/create-review.dto';
+import { ReviewResponseDto } from './dto/find-review.dto';
+import { UpdateReviewDto } from './dto/update-review.dto';
+import { ReviewService } from './review.service';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('reviews')
@@ -58,7 +57,7 @@ export class ReviewController {
 
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Get(':id')
-  @UsePipes(new ValidateUuidPipe())
+  @UsePipes(new ValidateIdFromParam())
   findById(@Param('id') id: string) {
     return this.reviewService.findById(id);
   }
