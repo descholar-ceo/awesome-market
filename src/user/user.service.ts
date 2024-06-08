@@ -374,7 +374,7 @@ export class UserService {
     )?.data;
     if (!!adminUser?.email) {
       try {
-        const approvalUrl = `${this.config.get<string>(API_URL)}/users/approve-seller-account?seller-id=${savedUser.id}`;
+        const approvalUrl = `${this.config.get<string>(API_URL)}/auth/approve-seller-account?seller-id=${savedUser.id}`;
         const { html, text } = prepareAccountApprovalEmailBody({
           approvalUrl,
           admin: adminUser,
