@@ -72,18 +72,6 @@ export class InventoryService {
     );
   }
 
-  async findOneByIdWithoutAssociations(
-    id: string,
-    queryRunner?: QueryRunner,
-  ): Promise<InventoryResponseDto> {
-    return await this.findOneBy(
-      {
-        where: { id },
-      },
-      queryRunner,
-    );
-  }
-
   async increaseInventory(
     id: string,
     updateInventoryData: UpdateInventoryDto,
@@ -115,7 +103,7 @@ export class InventoryService {
     currUser: User,
     queryRunner?: QueryRunner,
   ): Promise<InventoryResponseDto> {
-    const inventory = (await this.findOneByIdWithoutAssociations(id))?.data;
+    const inventory = (await this.findOneById(id))?.data;
     if (!inventory) {
       throw new NotFoundException(`Inventory with ID ${id} not found`);
     }
@@ -141,7 +129,7 @@ export class InventoryService {
 
   async remove(id: string, currUser: User): Promise<CommonResponseDto> {
     try {
-      const inventory = await this.findOneByIdWithoutAssociations(id);
+      const inventory = await this.findOneById(id);
       if (!inventory) {
         throw new NotFoundException(`Inventory with ID ${id} not found`);
       }
