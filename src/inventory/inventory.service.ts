@@ -1,16 +1,15 @@
-import { CommonResponseDto } from '@/common/common.dtos';
+import {
+  CustomBadRequest,
+  CustomForbiddenException,
+  CustomNotFoundException,
+} from '@/common/exception/custom.exception';
 import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { Inventory } from '@/inventory/entities/inventory.entity';
 import { ProductService } from '@/product/product.service';
 import { User } from '@/user/entities/user.entity';
 import { UserService } from '@/user/user.service';
 import { isUserAdmin } from '@/user/user.utils';
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { FindOneOptions, QueryRunner, Repository } from 'typeorm';
@@ -31,11 +30,10 @@ export class InventoryService {
     currUser: User,
   ): Promise<InventoryResponseDto> {
     const { productId, quantity } = createInventoryData;
-    const product = (await this.productService.findById(productId))?.data;
-    if (!product) throw new NotFoundException('Product not found');
-    let inventory = (
-      await this.findByOwnerIdAndProductId(currUser.id, productId)
-    )?.[0];
+    const { data: product } =
+      (await this.productService.findById(productId)) ?? {};
+    let [inventory] =
+      (await this.findByOwnerIdAndProductId(currUser.id, productId)) ?? [];
     let status: number = statusCodes.CREATED;
     let message: string = statusMessages.CREATED;
     if (!!inventory) {
@@ -66,7 +64,12 @@ export class InventoryService {
     return await this.findOneBy(
       {
         where: { id },
-        relations: ['owner', 'product', 'orderItems', 'orderItems.order'],
+        relations: [
+          'owner',
+          'product',
+          'orderItems.order',
+          'orderItems.inventory',
+        ],
       },
       queryRunner,
     );
@@ -77,15 +80,12 @@ export class InventoryService {
     updateInventoryData: UpdateInventoryDto,
     currUser: User,
   ): Promise<InventoryResponseDto> {
-    const inventory = (await this.findOneById(id))?.data;
-    if (!inventory) {
-      throw new NotFoundException(`Inventory with ID ${id} not found`);
-    }
+    const { data: inventory } = (await this.findOneBy({ where: { id } })) ?? {};
 
     if (!isUserAdmin(currUser) && inventory.owner.id !== currUser.id) {
-      throw new ForbiddenException(
-        'You cannot add items to an inventory that you do not own',
-      );
+      throw new CustomForbiddenException({
+        messages: ['You cannot add items to an inventory that you do not own'],
+      });
     }
     inventory.updatedBy = currUser;
     inventory.quantity += updateInventoryData.quantity;
@@ -103,13 +103,11 @@ export class InventoryService {
     currUser: User,
     queryRunner?: QueryRunner,
   ): Promise<InventoryResponseDto> {
-    const inventory = (await this.findOneById(id))?.data;
-    if (!inventory) {
-      throw new NotFoundException(`Inventory with ID ${id} not found`);
-    }
+    const { data: inventory } =
+      (await this.findOneBy({ where: { id } }, queryRunner)) ?? {};
     inventory.updatedBy = currUser;
     if (inventory.quantity < updateInventoryData.quantity) {
-      throw new BadRequestException('Not enough inventory');
+      throw new CustomBadRequest({ messages: ['Not enough inventory'] });
     }
     Object.assign(inventory, {
       quantity: inventory.quantity - updateInventoryData.quantity,
@@ -127,23 +125,20 @@ export class InventoryService {
     };
   }
 
-  async remove(id: string, currUser: User): Promise<CommonResponseDto> {
-    try {
-      const inventory = await this.findOneById(id);
-      if (!inventory) {
-        throw new NotFoundException(`Inventory with ID ${id} not found`);
-      }
+  async remove(id: string, currUser: User): Promise<InventoryResponseDto> {
+    const { data: inventory } = (await this.findOneById(id)) ?? {};
 
-      if (!isUserAdmin(currUser) && inventory.data.owner.id !== currUser.id) {
-        throw new ForbiddenException(
-          'You cannot delete a inventory that you do not own',
-        );
-      }
-      await this.inventoryRepository.delete(id);
-      return { status: statusCodes.OK, message: statusMessages.OK };
-    } catch (err) {
-      throw new IntersectionObserver(err);
+    if (!isUserAdmin(currUser) && inventory.owner.id !== currUser.id) {
+      throw new CustomForbiddenException({
+        messages: ['You cannot delete an inventory that you do not own'],
+      });
     }
+    await this.inventoryRepository.delete(id);
+    return {
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data: inventory,
+    };
   }
 
   private async findByOwnerIdAndProductId(
@@ -160,7 +155,7 @@ export class InventoryService {
 
   private async findOneBy(
     whereCondition: FindOneOptions<Inventory>,
-    queryRunner: QueryRunner,
+    queryRunner?: QueryRunner,
   ): Promise<InventoryResponseDto> {
     let inventory: Inventory;
     if (!!queryRunner) {
@@ -169,7 +164,7 @@ export class InventoryService {
       inventory = await this.inventoryRepository.findOne(whereCondition);
     }
     if (!inventory) {
-      throw new NotFoundException(`Inventory not found`);
+      throw new CustomNotFoundException({ messages: ['Inventory not found'] });
     }
 
     return {
