@@ -177,7 +177,9 @@ export class CategoryService {
     } else {
       category = await this.categoryRepository.findOne(whereCondition);
     }
-    if (!category) throw new CustomNotFoundException();
+    if (!category) {
+      throw new CustomNotFoundException({ messages: ['Category Not Found'] });
+    }
     return {
       status: statusCodes.OK,
       message: statusMessages.OK,
