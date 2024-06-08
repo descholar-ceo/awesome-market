@@ -1,21 +1,20 @@
 import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { CreateReviewDto } from './dto/create-review.dto';
-import { UpdateReviewDto } from './dto/update-review.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Review } from './entities/review.entity';
-import { Repository } from 'typeorm';
-import { User } from '@/user/entities/user.entity';
-import { ReviewResponseDto } from './dto/find-review.dto';
-import { ProductService } from '@/product/product.service';
-import { UserService } from '@/user/user.service';
+  CustomForbiddenException,
+  CustomNotFoundException,
+} from '@/common/exception/custom.exception';
 import { statusCodes, statusMessages } from '@/common/utils/status.utils';
-import { plainToInstance } from 'class-transformer';
+import { ProductService } from '@/product/product.service';
+import { User } from '@/user/entities/user.entity';
+import { UserService } from '@/user/user.service';
 import { isUserAdmin } from '@/user/user.utils';
-import { CommonResponseDto } from '@/common/common.dtos';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
+import { Repository } from 'typeorm';
+import { CreateReviewDto } from './dto/create-review.dto';
+import { ReviewResponseDto } from './dto/find-review.dto';
+import { UpdateReviewDto } from './dto/update-review.dto';
+import { Review } from './entities/review.entity';
 
 @Injectable()
 export class ReviewService {
@@ -30,8 +29,8 @@ export class ReviewService {
     currUser: User,
   ): Promise<ReviewResponseDto> {
     const { productId } = createReviewData;
-    const product = (await this.productService.findById(productId))?.data;
-    if (!product) throw new NotFoundException('Product not found');
+    const { data: product } =
+      (await this.productService.findById(productId)) ?? {};
     const review = await this.reviewRepository.create(createReviewData);
     review.product = product;
     review.ratedBy = (await this.userService.findOneById(currUser.id))?.data;
@@ -53,7 +52,7 @@ export class ReviewService {
       relations: ['ratedBy', 'updatedBy', 'product'],
     });
     if (!review) {
-      throw new NotFoundException(`Review with ID ${id} not found`);
+      throw new CustomNotFoundException({ messages: ['Review Not Found'] });
     }
 
     return {
@@ -70,10 +69,7 @@ export class ReviewService {
     updateReviewData: UpdateReviewDto,
     currUser: User,
   ): Promise<ReviewResponseDto> {
-    const review = (await this.findById(id))?.data;
-    if (!review) {
-      throw new NotFoundException(`Review with ID ${id} not found`);
-    }
+    const { data: review } = (await this.findById(id)) ?? {};
 
     if (!isUserAdmin(currUser) && review.ratedBy.id !== currUser.id) {
       throw new ForbiddenException(
@@ -83,34 +79,27 @@ export class ReviewService {
     review.updatedBy = currUser;
     review.ratedBy = currUser;
     Object.assign(review, updateReviewData);
-    const { affected } = await this.reviewRepository.update(id, review);
-    if (!!affected) {
-      return await this.findById(id);
-    }
+    const data = await this.reviewRepository.save(review);
     return {
-      status: statusCodes.INTERNAL_SERVER_ERROR,
-      message: 'Nothing updated',
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data,
     };
   }
 
-  async remove(id: string, currUser: User): Promise<CommonResponseDto> {
-    const review = await this.findById(id);
-    if (!review) {
-      throw new NotFoundException(`Review with ID ${id} not found`);
-    }
+  async remove(id: string, currUser: User): Promise<ReviewResponseDto> {
+    const { data: review } = (await this.findById(id)) ?? {};
 
-    if (!isUserAdmin(currUser) && review.data.ratedBy.id !== currUser.id) {
-      throw new ForbiddenException(
-        'You cannot delete a review that you do not own',
-      );
+    if (!isUserAdmin(currUser) && review.ratedBy.id !== currUser.id) {
+      throw new CustomForbiddenException({
+        messages: ['You cannot delete a review that you do not own'],
+      });
     }
-    const { affected } = await this.reviewRepository.delete(id);
-    if (!!affected) {
-      return { status: statusCodes.OK, message: statusMessages.OK };
-    }
+    await this.reviewRepository.delete(id);
     return {
-      status: statusCodes.INTERNAL_SERVER_ERROR,
-      message: 'Something went wrong, try again',
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data: review,
     };
   }
 }
