@@ -3,14 +3,18 @@ import { BaseValidator } from '../base-validator';
 import { CreateUserDto } from '@/user/dto/create-user.dto';
 import { UpdateUserDto } from '@/user/dto/update-user.dto';
 import { UserService } from '@/user/user.service';
+import { ConfigService } from '@/config/config.service';
 
 @Injectable()
 export class ValidateUniqueUserPipe
   extends BaseValidator
   implements PipeTransform
 {
-  constructor(private readonly userService: UserService) {
-    super();
+  constructor(
+    private readonly userService: UserService,
+    readonly config: ConfigService,
+  ) {
+    super(config);
   }
   async transform(
     value: CreateUserDto | UpdateUserDto,
