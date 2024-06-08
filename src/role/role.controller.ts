@@ -9,13 +9,17 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
+  UsePipes,
 } from '@nestjs/common';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { ADMIN_ROLE_NAME } from './role.constants';
 import { RoleService } from './role.service';
 import { ValidateUniqueRolePipe } from '@/pipes/validate-record-uniqueness/validate-unique-role/validate-unique-role.pipe';
+import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
+import { FindRoleFiltersDto } from './dto/find-role.dto';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('roles')
@@ -29,12 +33,20 @@ export class RoleController {
   }
 
   @Roles([ADMIN_ROLE_NAME])
+  @Get()
+  findWithFilters(@Query() filters: FindRoleFiltersDto) {
+    return this.roleService.findWithFilters(filters);
+  }
+
+  @Roles([ADMIN_ROLE_NAME])
+  @UsePipes(new ValidateIdFromParam())
   @Get(':id')
   findById(@Param('id') id: string) {
     return this.roleService.findById(id);
   }
 
   @Roles([ADMIN_ROLE_NAME])
+  @UsePipes(new ValidateIdFromParam())
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -44,6 +56,7 @@ export class RoleController {
   }
 
   @Roles([ADMIN_ROLE_NAME])
+  @UsePipes(new ValidateIdFromParam())
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.roleService.remove(id);
