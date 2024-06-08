@@ -1,7 +1,8 @@
 import { PRODUCTION } from '@/common/constants.common';
+import { CustomBadRequest } from '@/common/exception/custom.exception';
 import { ConfigService } from '@/config/config.service';
 import { NODE_ENV } from '@/config/config.utils';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryRunner, Repository } from 'typeorm';
 import { CreateOrderItemDto } from './dto/create-order-item.dto';
@@ -17,7 +18,7 @@ export class OrderItemService {
   async create(
     createOrderItemData: CreateOrderItemDto,
     queryRunner?: QueryRunner,
-  ): Promise<OrderItem> {
+  ): Promise<OrderItem | null> {
     const { inventory, order, quantity } = createOrderItemData;
     let createdOrderItem: OrderItem = this.orderItemRepository.create({
       inventory,
@@ -37,9 +38,9 @@ export class OrderItemService {
         }
         return createdOrderItem;
       } else {
-        throw new BadRequestException(
-          'Order Id missing or Inventory Id missing',
-        );
+        throw new CustomBadRequest({
+          messages: ['Order Id missing or Inventory Id missing'],
+        });
       }
     } catch (err) {
       if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
