@@ -13,6 +13,7 @@ import {
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
 import { orderStatuses, paymentStatuses } from '../order.constants';
+import { Payout } from '@/payout/entities/payout.entity';
 
 @Entity()
 export class Order {
@@ -53,6 +54,10 @@ export class Order {
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
   @Expose()
   orderItems: OrderItem[];
+
+  @OneToMany(() => Payout, (payout) => payout.order)
+  @Expose()
+  payouts: Payout[];
 
   @BeforeInsert()
   generateUniqIds() {
