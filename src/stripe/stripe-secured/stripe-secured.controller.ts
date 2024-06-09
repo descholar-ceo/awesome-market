@@ -6,7 +6,7 @@ import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
 import { ADMIN_ROLE_NAME, SELLER_ROLE_NAME } from '@/role/role.constants';
 import { StripeService } from '@/stripe/stripe.service';
 import { UserService } from '@/user/user.service';
-import { Controller, Param, Post, UseGuards, UsePipes } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, UsePipes } from '@nestjs/common';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('stripe-secured')
@@ -17,7 +17,7 @@ export class StripeSecuredController {
   ) {}
 
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
-  @Post('/users/:id/get-secured-login-to-stripe-express-account')
+  @Get('/users/:id/get-secured-login-to-stripe-express-account')
   @UsePipes(new ValidateIdFromParam())
   async generateStripeExpressLoginUrl(
     @Param('id') userId: string,
