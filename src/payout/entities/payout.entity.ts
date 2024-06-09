@@ -2,9 +2,16 @@ import { Order } from '@/order/entities/order.entity';
 import { paymentStatuses } from '@/order/order.constants';
 import { User } from '@/user/entities/user.entity';
 import { Expose } from 'class-transformer';
-import { BeforeInsert, Column, ManyToOne, PrimaryColumn } from 'typeorm';
+import {
+  BeforeInsert,
+  Column,
+  Entity,
+  ManyToOne,
+  PrimaryColumn,
+} from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
 
+@Entity()
 export class Payout {
   @PrimaryColumn()
   @Expose()
