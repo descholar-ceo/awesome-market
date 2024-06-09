@@ -16,6 +16,7 @@ import { RoleResponseDto } from '@/role/dto/find-role.dto';
 import { Role } from '@/role/entities/role.entity';
 import { RoleService } from '@/role/role.service';
 import { UserResponseDto } from '@/user/dto/find-user.dto';
+import { User } from '@/user/entities/user.entity';
 import { UserService } from '@/user/user.service';
 import { Injectable, Logger } from '@nestjs/common';
 
@@ -52,11 +53,14 @@ export class InitService {
     email: string,
     roles: Role[],
   ): Promise<UserResponseDto> {
-    const user = (await this.userService.findOneByEmail(email))?.data;
+    let user: User;
+    try {
+      user = (await this.userService.findOneByEmail(email))?.data;
+    } catch (err) {
+      this.log(err, 'error');
+    }
     if (!user) {
-      if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-        Logger.debug(`The initial ${email} does not exist, creating it...`);
-      }
+      this.log(`The initial ${email} does not exist, creating it...`, 'debug');
       return this.userService.create({
         email,
         firstName: this.config.get<string>(INITIAL_ADMIN_FNAME),
@@ -67,8 +71,9 @@ export class InitService {
       });
     } else {
       if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-        Logger.debug(
+        this.log(
           `Initial ${email} user already exists, skipping its initialization...`,
+          'debug',
         );
       }
       return { status: statusCodes.OK, message: statusMessages.OK, data: user };
