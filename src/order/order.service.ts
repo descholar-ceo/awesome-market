@@ -112,10 +112,12 @@ export class OrderService {
       };
     } catch (err) {
       if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-        Logger.error(err);
+        Logger.error(err.response?.message?.join(',') ?? err);
       }
       await queryRunner.rollbackTransaction();
-      throw new CustomInternalServerErrorException();
+      throw new CustomInternalServerErrorException({
+        messages: [err.response?.message?.join(',') ?? null],
+      });
     } finally {
       await queryRunner.release();
     }
