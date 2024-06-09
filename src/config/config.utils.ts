@@ -48,6 +48,8 @@ export const STRIPE_SECRET_KEY = 'STRIPE_SECRET_KEY';
 export const GENERAL_JWT_EXPIRES = 'GENERAL_JWT_EXPIRES';
 export const STRIPE_WEBHOOK_SECRET = 'STRIPE_WEBHOOK_SECRET';
 export const DEFAULT_SHIPPING_ADDRESS = 'DEFAULT_SHIPPING_ADDRESS';
+export const PLATFORM_COMMISSION_IN_PERCENTAGE =
+  'PLATFORM_COMMISSION_IN_PERCENTAGE';
 
 export const validateEnvironment = (
   envConfigure: EnvConfigure,
@@ -83,6 +85,7 @@ export const validateEnvironment = (
     [GENERAL_JWT_EXPIRES]: Joi.string().required(),
     [STRIPE_WEBHOOK_SECRET]: Joi.string().required(),
     [DEFAULT_SHIPPING_ADDRESS]: Joi.string().optional(),
+    [PLATFORM_COMMISSION_IN_PERCENTAGE]: Joi.number().required(),
   });
 
   const { error, value: validatedEnvConfig } =
