@@ -1,4 +1,3 @@
-import { CommonResponseDto } from '@/common/common.dtos';
 import { PRODUCTION } from '@/common/constants.common';
 import {
   CustomBadRequest,
@@ -7,6 +6,7 @@ import {
   CustomNotFoundException,
   CustomUnauthorizedException,
 } from '@/common/exception/custom.exception';
+import { getDateInterval } from '@/common/utils/dates.utils';
 import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { decodeToken, generateTokens } from '@/common/utils/token.utils';
 import { ConfigService } from '@/config/config.service';
@@ -41,11 +41,13 @@ import { AuthTokenDataDto, LoginDto, LoginResponseDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import {
+  getNewStripeAccountOnboardingUrl,
   prepareAccountApprovalEmailBody,
   prepareAccountApprovedMessageBody,
   prepareAccountPendingNotifyBody,
 } from './user.utils';
-import { getDateInterval } from '@/common/utils/dates.utils';
+import { StripeService } from '@/stripe/stripe.service';
+import { CommonResponseDto } from '@/common/common.dtos';
 
 @Injectable()
 export class UserService {
@@ -135,17 +137,39 @@ export class UserService {
     }
   }
 
-  async approveSellerAccount(sellerId: string): Promise<CommonResponseDto> {
+  async approveSellerAccount(
+    sellerId: string,
+    stripeService: StripeService,
+  ): Promise<UserResponseDto> {
     this.validateSellerId(sellerId);
 
     const sellerUser = await this.findAndValidateSeller(sellerId);
     this.ensureSellerIsNotActive(sellerUser);
 
+    const stripeAccountId =
+      await stripeService.createExpressAccount(sellerUser);
+
     const { data: updatedSeller } =
-      (await this.update(sellerId, { isActive: true })) ?? {};
-    await this.sendApprovalEmail(updatedSeller);
+      (await this.update(sellerId, { isActive: true, stripeAccountId })) ?? {};
+    const stripeAccountOnboardingUrl =
+      await stripeService.createExpressAccountLink(updatedSeller);
+    await this.sendApprovalEmail(updatedSeller, stripeAccountOnboardingUrl);
 
     return { status: statusCodes.OK, message: statusMessages.OK };
+  }
+
+  async generateNewStripeOnBoardingUrl(
+    userId: string,
+    stripeService: StripeService,
+  ): Promise<CommonResponseDto> {
+    const { data: user } = (await this.findOneById(userId)) ?? {};
+    const stripeAccountOnboardingUrl =
+      await stripeService.createExpressAccountLink(user);
+    return {
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data: { stripeAccountOnboardingUrl },
+    };
   }
 
   async findWithFilters(
@@ -280,10 +304,14 @@ export class UserService {
     }
   }
 
-  private async sendApprovalEmail(seller: User): Promise<void> {
+  private async sendApprovalEmail(
+    seller: User,
+    stripeAccountOnboardingUrl: string,
+  ): Promise<void> {
     const { html, text } = prepareAccountApprovedMessageBody({
-      approvalUrl: null,
-      admin: null,
+      stripeAccountOnboardingUrl,
+      getNewStripeAccountOnboardingUrl:
+        getNewStripeAccountOnboardingUrl(seller),
       seller,
     });
     await this.mailService.sendEmail({
@@ -374,7 +402,7 @@ export class UserService {
     )?.data;
     if (!!adminUser?.email) {
       try {
-        const approvalUrl = `${this.config.get<string>(API_URL)}/auth/approve-seller-account?seller-id=${savedUser.id}`;
+        const approvalUrl = `${this.config.get<string>(API_URL)}/orders/users/${savedUser.id}/approve-seller-account`;
         const { html, text } = prepareAccountApprovalEmailBody({
           approvalUrl,
           admin: adminUser,

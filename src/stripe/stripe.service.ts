@@ -13,6 +13,7 @@ import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { decodeToken } from '@/common/utils/token.utils';
 import { ConfigService } from '@/config/config.service';
 import {
+  API_URL,
   APP_MAILING_ADDRESS,
   NODE_ENV,
   PLATFORM_COMMISSION_IN_PERCENTAGE,
@@ -24,12 +25,13 @@ import { Order } from '@/order/entities/order.entity';
 import { orderStatuses, paymentStatuses } from '@/order/order.constants';
 import { OrderService } from '@/order/order.service';
 import { prepareOrderSuccessPaymentEmailBody } from '@/order/order.utils';
+import { PayoutService } from '@/payout/payout.service';
 import { User } from '@/user/entities/user.entity';
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
-import { StripProductLineDto } from './stripe.dto';
-import { PayoutService } from '@/payout/payout.service';
 import { DataSource } from 'typeorm';
+import { StripProductLineDto } from './stripe.dto';
+import { getNewStripeAccountOnboardingUrl } from '@/user/user.utils';
 
 @Injectable()
 export class StripeService {
@@ -44,6 +46,30 @@ export class StripeService {
     this.stripe = new Stripe(this.config.get<string>(STRIPE_SECRET_KEY), {
       apiVersion: '2024-04-10',
     });
+  }
+
+  async createExpressAccount(seller: User): Promise<string> {
+    const account = await this.stripe.accounts.create({
+      type: 'express',
+      country: 'US',
+      email: seller.email,
+    });
+    return account.id;
+  }
+
+  async createExpressAccountLink(seller: User): Promise<string> {
+    if (!seller || !seller.stripeAccountId) {
+      throw new CustomBadRequest({
+        messages: ['Seller not found or Stripe account ID not set'],
+      });
+    }
+    const accountLink = await this.stripe.accountLinks.create({
+      account: seller.stripeAccountId,
+      type: 'account_onboarding',
+      refresh_url: getNewStripeAccountOnboardingUrl(seller),
+      return_url: `${this.config.get<string>(API_URL)}/orders/users/${seller.id}/stripe-express-account-onboarding-success`,
+    });
+    return accountLink.url;
   }
 
   async createCheckoutSession(
@@ -114,6 +140,13 @@ export class StripeService {
     return {
       status: statusCodes.OK,
       message: `${statusMessages.OK}: Payment success received, check your email for your order status updates. Thank you for shopping with us!`,
+    };
+  }
+
+  async handleSuccessfulStripeExpressAccountOnboarding(): Promise<CommonResponseDto> {
+    return {
+      status: statusCodes.OK,
+      message: `${statusMessages.OK}: Your Stripe Express Account has been successfully onboard. You will be able to receive payments from Awesome Market!`,
     };
   }
 

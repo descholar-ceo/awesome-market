@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common';
-import { UserService } from '../user.service';
-import { LoginDto } from '../dto/login.dto';
-import { UserResponseDto } from '../dto/find-user.dto';
-import { CreateUserDto } from '../dto/create-user.dto';
 import { ValidateUniqueUserPipe } from '@/pipes/validate-record-uniqueness/validate-unique-user/validate-unique-user.pipe';
+import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UserResponseDto } from '../dto/find-user.dto';
+import { LoginDto } from '../dto/login.dto';
+import { UserService } from '../user.service';
 
 @Controller('auth')
 export class AuthController {
@@ -25,10 +25,5 @@ export class AuthController {
   @Get('/get-new-access-token')
   async refreshAccessToken(@Headers('authorization') refreshToken: string) {
     return await this.userService.refreshAccessToken(refreshToken);
-  }
-
-  @Get('/approve-seller-account')
-  async approveSellerAccount(@Query('seller-id') sellerId: string) {
-    return await this.userService.approveSellerAccount(sellerId);
   }
 }

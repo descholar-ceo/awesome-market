@@ -61,6 +61,10 @@ export class User {
   @Expose()
   shippingAddress?: string;
 
+  @Column()
+  @Expose()
+  stripeAccountId?: string;
+
   @Column({ default: 'rwf' })
   @Expose()
   currency: string;
