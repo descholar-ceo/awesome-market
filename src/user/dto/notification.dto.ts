@@ -6,4 +6,5 @@ export class SellerAccountEmailBodyOptionsDto {
   stripeAccountOnboardingUrl?: string = null;
   getNewStripeAccountOnboardingUrl?: string = null;
   seller?: User = null;
+  stripeExpressAccountLoginUrl?: string = null;
 }

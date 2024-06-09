@@ -32,6 +32,7 @@ import Stripe from 'stripe';
 import { DataSource } from 'typeorm';
 import { StripProductLineDto } from './stripe.dto';
 import { getNewStripeAccountOnboardingUrl } from '@/user/user.utils';
+import { UserService } from '@/user/user.service';
 
 @Injectable()
 export class StripeService {
@@ -42,6 +43,7 @@ export class StripeService {
     private readonly mailService: MailService,
     private readonly payoutService: PayoutService,
     private readonly dataSource: DataSource,
+    private readonly userService: UserService,
   ) {
     this.stripe = new Stripe(this.config.get<string>(STRIPE_SECRET_KEY), {
       apiVersion: '2024-04-10',
@@ -143,11 +145,10 @@ export class StripeService {
     };
   }
 
-  async handleSuccessfulStripeExpressAccountOnboarding(): Promise<CommonResponseDto> {
-    return {
-      status: statusCodes.OK,
-      message: `${statusMessages.OK}: Your Stripe Express Account has been successfully onboard. You will be able to receive payments from Awesome Market!`,
-    };
+  async handleSuccessfulStripeExpressAccountOnboarding(
+    userId: string,
+  ): Promise<CommonResponseDto> {
+    return await this.userService.generateStripeExpressLoginUrl(userId, this);
   }
 
   async handleCancelledStripePayment(): Promise<CommonResponseDto> {
