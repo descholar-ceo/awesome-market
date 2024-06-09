@@ -21,6 +21,7 @@ import { ReviewModule } from './review/review.module';
 import { RoleModule } from './role/role.module';
 import { StripeModule } from './stripe/stripe.module';
 import { UserModule } from './user/user.module';
+import { PayoutModule } from './payout/payout.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { UserModule } from './user/user.module';
     OrderModule,
     OrderItemModule,
     StripeModule,
+    PayoutModule,
   ],
   controllers: [AppController],
   providers: [AppService, InitialAdminProvider],

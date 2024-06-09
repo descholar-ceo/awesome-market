@@ -17,6 +17,7 @@ import {
 } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
 import { DEFAULT_SHIPPING_ADDRESS_VALUE } from '../user.constants';
+import { Payout } from '@/payout/entities/payout.entity';
 
 @Entity()
 export class User {
@@ -97,6 +98,10 @@ export class User {
   @OneToMany(() => Order, (order) => order.buyer)
   @Expose()
   orders: Order[];
+
+  @OneToMany(() => Payout, (payout) => payout.seller)
+  @Expose()
+  payouts: Payout[];
 
   @BeforeInsert()
   initializeUser() {
