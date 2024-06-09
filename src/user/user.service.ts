@@ -310,8 +310,14 @@ export class UserService {
     return this.buildUserResponse(savedUser, statusCodes.OK, statusMessages.OK);
   }
 
-  async remove(id: string): Promise<UserResponseDto> {
+  async remove(
+    id: string,
+    stripeService: StripeService,
+  ): Promise<UserResponseDto> {
     const { data: user } = (await this.findOneBy({ where: { id } })) ?? {};
+    if (!!user.stripeAccountId) {
+      await stripeService.deleteConnectedAccount(user.stripeAccountId);
+    }
     await this.userRepository.delete(id);
     return this.buildUserResponse(user, statusCodes.OK, statusMessages.OK);
   }

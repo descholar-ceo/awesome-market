@@ -1,4 +1,3 @@
-import { CommonResponseDto } from '@/common/common.dtos';
 import { Roles } from '@/decorators/roles/roles.decorator';
 import { AuthGuard } from '@/guards/auth/auth.guard';
 import { RolesGuard } from '@/guards/roles/roles.guard';
@@ -12,7 +11,6 @@ import {
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Patch,
@@ -44,13 +42,6 @@ export class UserController {
     @Body(ValidateUniqueUserPipe) updateUserDto: UpdateUserDto,
   ) {
     return this.userService.update(id, updateUserDto);
-  }
-
-  @Roles([ADMIN_ROLE_NAME])
-  @Delete(':id')
-  @UsePipes(new ValidateIdFromParam())
-  async remove(@Param('id') id: string): Promise<CommonResponseDto> {
-    return this.userService.remove(id);
   }
 
   @Roles([ADMIN_ROLE_NAME])
