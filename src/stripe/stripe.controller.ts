@@ -14,6 +14,7 @@ import {
 import { Request, Response } from 'express';
 import { StripeService } from './stripe.service';
 import { UserService } from '@/user/user.service';
+import { CommonResponseDto } from '@/common/common.dtos';
 
 @Controller('orders')
 export class StripeController {
@@ -88,7 +89,11 @@ export class StripeController {
 
   @Get('users/:id/stripe-express-account-onboarding-success')
   @UsePipes(new ValidateIdFromParam())
-  handleSuccessfulStripeExpressAccountOnboarding() {
-    return this.stripeService.handleSuccessfulStripeExpressAccountOnboarding();
+  handleSuccessfulStripeExpressAccountOnboarding(
+    @Param('id') userId: string,
+  ): Promise<CommonResponseDto> {
+    return this.stripeService.handleSuccessfulStripeExpressAccountOnboarding(
+      userId,
+    );
   }
 }

@@ -252,6 +252,73 @@ export const prepareAccountApprovedMessageBody = (
   return { html, text };
 };
 
+export const prepareLoginToStripeExpressAccountMessageBody = (
+  data: SellerAccountEmailBodyOptionsDto,
+): { html: string; text: string } => {
+  const {
+    stripeExpressAccountLoginUrl,
+    seller: { firstName: sellerFName, lastName: sellerLName },
+  } = data;
+
+  const html = `<h4>Dear ${sellerFName} ${sellerLName},</h4>
+    
+  <div>
+    <p>
+      I hope this email finds you well.
+    </p>
+    <p>
+      We have received your request to access your Stripe Express account. Through your Stripe Express Dashboard, you can view all payment information and withdraw the paid amount to your bank account. Please use the link below to log in:
+    </p>
+    <p>
+      <a href="${stripeExpressAccountLoginUrl}">Log In to Stripe Express</a>
+    </p>
+    <p>
+      This link will expire in 24 hours. If you do not log in within this time frame, you will need to request a new login link.
+    </p>
+    <p>
+      If the link has expired, please log in to your Awesome Market dashboard to request a new Stripe Express login link. This is a secured process to ensure your account's safety.
+    </p>
+    <p>
+      We're excited to have you as part of our marketplace. If you have any questions or need assistance, please don't hesitate to reply to this email.
+    </p>
+    <p>
+      Thank you for being a valued member of <strong>Awesome Market Place</strong>.
+    </p>
+    <p>Best regards,</p> <br>
+
+    <p>
+      Awesome Market Engineering Team
+    </p>
+    <p><a href="https://awesome-market.com/">Awesome Market Place</a></p>
+  </div>
+  `;
+
+  const text = `Dear ${sellerFName} ${sellerLName},
+  
+  I hope this email finds you well.
+  
+  We have received your request to access your Stripe Express account. Through your Stripe Express Dashboard, you can view all payment information and withdraw the paid amount to your bank account. Please use the link below to log in:
+
+  ${stripeExpressAccountLoginUrl}
+
+  This link will expire in 24 hours. If you do not log in within this time frame, you will need to request a new login link.
+
+  If the link has expired, please log in to your Awesome Market dashboard to request a new Stripe Express login link. This is a secured process to ensure your account's safety.
+
+  We're excited to have you as part of our marketplace. If you have any questions or need assistance, please don't hesitate to reply to this email.
+
+  Thank you for being a valued member of Awesome Market Place.
+  
+  Best regards,
+
+  Awesome Market Engineering Team
+  
+  https://awesome-market.com/
+  `;
+
+  return { html, text };
+};
+
 export const isUserAdmin = (user: User): boolean => {
   return user.roles?.some((currRole) => {
     if (typeof currRole === 'string') {

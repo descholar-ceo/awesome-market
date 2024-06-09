@@ -45,6 +45,7 @@ import {
   prepareAccountApprovalEmailBody,
   prepareAccountApprovedMessageBody,
   prepareAccountPendingNotifyBody,
+  prepareLoginToStripeExpressAccountMessageBody,
 } from './user.utils';
 import { StripeService } from '@/stripe/stripe.service';
 import { CommonResponseDto } from '@/common/common.dtos';
@@ -185,10 +186,22 @@ export class UserService {
     const stripeExpressAccountLoginUrl = await stripeService.createLoginLink(
       user.stripeAccountId,
     );
+    if (!!stripeExpressAccountLoginUrl) {
+      const { html, text } = prepareLoginToStripeExpressAccountMessageBody({
+        seller: user,
+        stripeExpressAccountLoginUrl,
+      });
+      await this.mailService.sendEmail({
+        fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+        personalizations: [{ to: { email: user.email } }],
+        emailHtmlBody: html,
+        emailTextBody: text,
+        emailSubject: '',
+      });
+    }
     return {
       status: statusCodes.OK,
-      message: statusMessages.OK,
-      data: { stripeExpressAccountLoginUrl },
+      message: `${statusMessages.OK}: The login to your stripe express dashboard has been sent to your email, kindly check it out`,
     };
   }
 
