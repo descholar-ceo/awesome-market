@@ -27,12 +27,12 @@ import { OrderService } from '@/order/order.service';
 import { prepareOrderSuccessPaymentEmailBody } from '@/order/order.utils';
 import { PayoutService } from '@/payout/payout.service';
 import { User } from '@/user/entities/user.entity';
+import { UserService } from '@/user/user.service';
+import { getNewStripeAccountOnboardingUrl } from '@/user/user.utils';
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { DataSource } from 'typeorm';
 import { StripProductLineDto } from './stripe.dto';
-import { getNewStripeAccountOnboardingUrl } from '@/user/user.utils';
-import { UserService } from '@/user/user.service';
 
 @Injectable()
 export class StripeService {
@@ -208,7 +208,8 @@ export class StripeService {
       });
     }
   }
-  async processPayouts() {
+
+  async processPayouts(): Promise<void> {
     const { data: pendingPayouts } = await this.payoutService.findWithFilters({
       status: paymentStatuses.PENDING,
     });
@@ -225,6 +226,7 @@ export class StripeService {
           status: paymentStatuses.PAID,
           processedAt: new Date(),
         });
+        Logger.debug('All Pending Payouts Have been processed');
       } catch (err) {
         this.logError(err);
         throw new CustomInternalServerErrorException();

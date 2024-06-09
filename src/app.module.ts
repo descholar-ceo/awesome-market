@@ -22,6 +22,7 @@ import { RoleModule } from './role/role.module';
 import { StripeModule } from './stripe/stripe.module';
 import { UserModule } from './user/user.module';
 import { PayoutModule } from './payout/payout.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PayoutModule } from './payout/payout.module';
     OrderItemModule,
     StripeModule,
     PayoutModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService, InitialAdminProvider],

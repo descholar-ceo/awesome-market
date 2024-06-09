@@ -15,6 +15,7 @@ import { Request, Response } from 'express';
 import { StripeService } from './stripe.service';
 import { UserService } from '@/user/user.service';
 import { CommonResponseDto } from '@/common/common.dtos';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Controller('orders')
 export class StripeController {
@@ -95,5 +96,10 @@ export class StripeController {
     return this.stripeService.handleSuccessfulStripeExpressAccountOnboarding(
       userId,
     );
+  }
+
+  @Cron(CronExpression.EVERY_30_MINUTES)
+  async processPayouts(): Promise<void> {
+    return await this.stripeService.processPayouts();
   }
 }
