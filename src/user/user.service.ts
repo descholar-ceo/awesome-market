@@ -196,7 +196,8 @@ export class UserService {
         personalizations: [{ to: { email: user.email } }],
         emailHtmlBody: html,
         emailTextBody: text,
-        emailSubject: '',
+        emailSubject:
+          'Access Your Stripe Express Account to Manage Payments and Withdraw Funds',
       });
     }
     return {
