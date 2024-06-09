@@ -183,6 +183,18 @@ export class StripeService {
         throw new CustomBadRequest();
     }
   }
+  async createLoginLink(stripeAccountId: string): Promise<string> {
+    try {
+      const loginLink =
+        await this.stripe.accounts.createLoginLink(stripeAccountId);
+      return loginLink.url;
+    } catch (err) {
+      this.logError(err);
+      throw new CustomInternalServerErrorException({
+        messages: ['Failed to create Stripe login link'],
+      });
+    }
+  }
   private constructEvent(
     payload: Buffer,
     sig: string,

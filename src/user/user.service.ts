@@ -172,6 +172,26 @@ export class UserService {
     };
   }
 
+  async generateStripeExpressLoginUrl(
+    userId: string,
+    stripeService: StripeService,
+  ): Promise<CommonResponseDto> {
+    const { data: user } = (await this.findOneById(userId)) ?? {};
+    if (!user?.stripeAccountId) {
+      throw new CustomBadRequest({
+        messages: ['This user seems to not have an express connected account'],
+      });
+    }
+    const stripeExpressAccountLoginUrl = await stripeService.createLoginLink(
+      user.stripeAccountId,
+    );
+    return {
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data: { stripeExpressAccountLoginUrl },
+    };
+  }
+
   async findWithFilters(
     filters: FindUserFiltersDto,
   ): Promise<UsersResponseDto> {
