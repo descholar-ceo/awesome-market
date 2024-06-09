@@ -28,16 +28,20 @@ export class InitService {
   ) {}
 
   private async createOrFindRole(name: string): Promise<RoleResponseDto> {
-    const { data: role } = (await this.roleService.findOneByName(name)) ?? {};
+    let role: Role;
+    try {
+      role = (await this.roleService.findOneByName(name))?.data;
+    } catch (err) {
+      this.log(err, 'error');
+    }
     if (!role) {
-      if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-        Logger.debug(`Initial ${name} role does not exist, creating it...`);
-      }
+      this.log(`Initial ${name} role does not exist, creating it...`, 'debug');
       return this.roleService.create({ name });
     } else {
       if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
-        Logger.debug(
+        this.log(
           `Initial ${name} role already exists, skipping its initialization...`,
+          'debug',
         );
       }
       return { status: statusCodes.OK, message: statusMessages.OK, data: role };
@@ -80,5 +84,22 @@ export class InitService {
     await this.createOrFindRole(buyerRoleName);
     await this.createOrFindRole(sellerRoleName);
     await this.createOrFindUser(adminUserEmail, [adminRole]);
+  }
+
+  private log(message: string, type: 'error' | 'debug') {
+    switch (type) {
+      case 'debug':
+        {
+          if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+            Logger.debug(message);
+          }
+        }
+        break;
+      case 'error': {
+        if (this.config.get<string>(NODE_ENV) !== PRODUCTION) {
+          Logger.error(message);
+        }
+      }
+    }
   }
 }
