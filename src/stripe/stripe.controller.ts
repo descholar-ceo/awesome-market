@@ -13,10 +13,14 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { StripeService } from './stripe.service';
+import { UserService } from '@/user/user.service';
 
 @Controller('orders')
 export class StripeController {
-  constructor(private readonly stripeService: StripeService) {}
+  constructor(
+    private readonly stripeService: StripeService,
+    private readonly userService: UserService,
+  ) {}
   @Get(':id/checkout')
   @UsePipes(new ValidateIdFromParam())
   async createCheckoutSession(
@@ -62,5 +66,29 @@ export class StripeController {
       stripeSignature,
       req['rawBody'],
     );
+  }
+
+  @Get('users/:id/approve-seller-account')
+  @UsePipes(new ValidateIdFromParam())
+  async approveSellerAccount(@Param('id') sellerId: string) {
+    return await this.userService.approveSellerAccount(
+      sellerId,
+      this.stripeService,
+    );
+  }
+
+  @Get('users/:id/get-new-stripe-account-onboarding-url')
+  @UsePipes(new ValidateIdFromParam())
+  async getNewStripe(@Param('id') id: string) {
+    return await this.userService.generateNewStripeOnBoardingUrl(
+      id,
+      this.stripeService,
+    );
+  }
+
+  @Get('users/:id/stripe-express-account-onboarding-success')
+  @UsePipes(new ValidateIdFromParam())
+  handleSuccessfulStripeExpressAccountOnboarding() {
+    return this.stripeService.handleSuccessfulStripeExpressAccountOnboarding();
   }
 }

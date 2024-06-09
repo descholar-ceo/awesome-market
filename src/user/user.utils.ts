@@ -1,6 +1,12 @@
 import { ADMIN_ROLE_NAME } from '@/role/role.constants';
 import { SellerAccountEmailBodyOptionsDto } from './dto/notification.dto';
 import { User } from './entities/user.entity';
+import {
+  API_URL,
+  dotenvConfig,
+  getEnvironmentValue,
+  validateEnvironment,
+} from '@/config/config.utils';
 
 export const prepareAccountApprovalEmailBody = (
   data: SellerAccountEmailBodyOptionsDto,
@@ -156,8 +162,11 @@ export const prepareAccountApprovedMessageBody = (
   data: SellerAccountEmailBodyOptionsDto,
 ): { html: string; text: string } => {
   const {
+    stripeAccountOnboardingUrl,
+    getNewStripeAccountOnboardingUrl,
     seller: { firstName: sellerFName, lastName: sellerLName },
   } = data;
+
   const html = `<h4>Dear ${sellerFName} ${sellerLName},</h4>
     
   <div>
@@ -165,7 +174,7 @@ export const prepareAccountApprovedMessageBody = (
       I hope this email finds you well.
     </p>
     <p>
-    I'm delighted to inform you that your seller account on <strong>Awesome Market Place</strong> has been successfully approved! 🎉
+      I'm delighted to inform you that your seller account on <strong>Awesome Market Place</strong> has been successfully approved! 🎉
     </p>
     <p>
       You can now log in to your account using the credentials you provided during registration and start creating products, adding inventories, and showcasing your offerings to our community of buyers.
@@ -174,10 +183,22 @@ export const prepareAccountApprovedMessageBody = (
       Here are a few key steps to get started:
     </p>
     <ol>
-      <li><strong>Log In: </strong> Visit https://awesome-market.com/ and enter your credentials to access your seller dashboard.</li>
+      <li><strong>Log In: </strong> Visit <a href="https://awesome-market.com/">Awesome Market</a> and enter your credentials to access your seller dashboard.</li>
       <li><strong>Create Products: </strong> Use the dashboard to create product listings, including detailed descriptions, images, and pricing information.</li>
       <li><strong>Manage Inventory: </strong> Keep track of your inventory levels and update them as needed to ensure accurate availability for buyers.</li>
     </ol>
+    <p>
+      <strong>Important:</strong> To start receiving payouts for your products, please complete your onboarding with Stripe. Click the link below to begin the onboarding process:
+    </p>
+    <p>
+      <a href="${stripeAccountOnboardingUrl}">Complete Stripe Onboarding</a>
+    </p>
+    <p>
+      This link will expire in 24 hours. If you do not complete the onboarding within this time frame, you will need to request a new onboarding link.
+    </p>
+    <p>
+      If the link has expired, click <a href="${getNewStripeAccountOnboardingUrl}">here</a> to get a new Stripe onboarding link.
+    </p>
     <p>
       We're thrilled to have you onboard and look forward to seeing your products on our platform. If you have any questions or need assistance, please don't hesitate to reply to this email.
     </p>
@@ -192,32 +213,42 @@ export const prepareAccountApprovedMessageBody = (
     <p><a href="https://awesome-market.com/">Awesome Market Place</a></p>
   </div>
   `;
+
   const text = `Dear ${sellerFName} ${sellerLName},
   
-      I hope this email finds you well.
-    
-      I'm delighted to inform you that your seller account on Awesome Market Place has been successfully approved! 🎉
-    
-      You can now log in to your account using the credentials you provided during registration and start creating products, adding inventories, and showcasing your offerings to our community of buyers.
-    
-      Here are a few key steps to get started:
+  I hope this email finds you well.
+  
+  I'm delighted to inform you that your seller account on Awesome Market Place has been successfully approved! 🎉
+  
+  You can now log in to your account using the credentials you provided during registration and start creating products, adding inventories, and showcasing your offerings to our community of buyers.
+  
+  Here are a few key steps to get started:
 
-      1. Log In: Visit https://awesome-market.com/ and enter your credentials to access your seller dashboard.
+  1. Log In: Visit https://awesome-market.com/ and enter your credentials to access your seller dashboard.
 
-      2. Create Products: Use the dashboard to create product listings, including detailed descriptions, images, and pricing information.
+  2. Create Products: Use the dashboard to create product listings, including detailed descriptions, images, and pricing information.
 
-      3. Manage Inventory: Keep track of your inventory levels and update them as needed to ensure accurate availability for buyers.
+  3. Manage Inventory: Keep track of your inventory levels and update them as needed to ensure accurate availability for buyers.
 
-      We're thrilled to have you onboard and look forward to seeing your products on our platform. If you have any questions or need assistance, please don't hesitate to reply to this email.
-    
-      Thank you for choosing Awesome Market Place. We wish you every success in your selling journey!
-      
-      Best regards,
+  Important: To start receiving payouts for your products, please complete your onboarding with Stripe. Use the following link to begin the onboarding process:
 
-      Awesome Market Engineering Team
-    
-      https://awesome-market.com/
+  ${stripeAccountOnboardingUrl}
+
+  This link will expire in 24 hours. If you do not complete the onboarding within this time frame, you will need to request a new onboarding link.
+
+  If the link has expired, click the following link to get a new Stripe onboarding link: ${getNewStripeAccountOnboardingUrl}
+
+  We're thrilled to have you onboard and look forward to seeing your products on our platform. If you have any questions or need assistance, please don't hesitate to reply to this email.
+
+  Thank you for choosing Awesome Market Place. We wish you every success in your selling journey!
+  
+  Best regards,
+
+  Awesome Market Engineering Team
+  
+  https://awesome-market.com/
   `;
+
   return { html, text };
 };
 
@@ -229,3 +260,8 @@ export const isUserAdmin = (user: User): boolean => {
     return currRole.name === ADMIN_ROLE_NAME;
   });
 };
+
+const envConfigure = validateEnvironment(dotenvConfig);
+
+export const getNewStripeAccountOnboardingUrl = (seller: User): string =>
+  `${getEnvironmentValue<string>(envConfigure, API_URL)}/orders/users/${seller.id}/get-new-stripe-account-onboarding-url`;

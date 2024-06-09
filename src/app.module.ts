@@ -27,6 +27,7 @@ import { PayoutModule } from './payout/payout.module';
   imports: [
     CommonModule,
     ConfigModule,
+    UserModule,
     NestConfigModule.forRoot({
       isGlobal: true,
       load: [typeorm],
@@ -36,7 +37,6 @@ import { PayoutModule } from './payout/payout.module';
       useFactory: async (configService: NestConfigService) =>
         configService.get('typeorm'),
     }),
-    UserModule,
     ProductModule,
     RoleModule,
     InitModule,

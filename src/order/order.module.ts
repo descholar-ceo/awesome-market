@@ -1,12 +1,12 @@
+import { InventoryModule } from '@/inventory/inventory.module';
+import { MailModule } from '@/mail/mail.module';
+import { OrderItemModule } from '@/order-item/order-item.module';
+import { UserModule } from '@/user/user.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Order } from './entities/order.entity';
 import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
-import { UserModule } from '@/user/user.module';
-import { InventoryModule } from '@/inventory/inventory.module';
-import { OrderItemModule } from '@/order-item/order-item.module';
-import { MailModule } from '@/mail/mail.module';
 
 @Module({
   imports: [
