@@ -314,12 +314,28 @@ export class UserService {
     id: string,
     stripeService: StripeService,
   ): Promise<UserResponseDto> {
-    const { data: user } = (await this.findOneBy({ where: { id } })) ?? {};
-    if (!!user.stripeAccountId) {
-      await stripeService.deleteConnectedAccount(user.stripeAccountId);
+    try {
+      const { data: user } =
+        (await this.findOneBy({ where: { id }, relations: ['inventories'] })) ??
+        {};
+      if (!!user?.inventories?.length) {
+        throw new CustomBadRequest({
+          messages: ['You cannot delete a user who still have inventories'],
+        });
+      }
+      if (!!user.stripeAccountId) {
+        await stripeService.deleteConnectedAccount(user.stripeAccountId);
+      }
+      await this.userRepository.delete(id);
+      return this.buildUserResponse(user, statusCodes.OK, statusMessages.OK);
+    } catch (err) {
+      this.logError(err);
+      throw new CustomInternalServerErrorException({
+        messages: [
+          'There was an error deleting a user, please check the logs, for more details',
+        ],
+      });
     }
-    await this.userRepository.delete(id);
-    return this.buildUserResponse(user, statusCodes.OK, statusMessages.OK);
   }
 
   private validateSellerId(sellerId: string): void {
