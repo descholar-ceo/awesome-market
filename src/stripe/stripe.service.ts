@@ -15,6 +15,7 @@ import { ConfigService } from '@/config/config.service';
 import {
   APP_MAILING_ADDRESS,
   NODE_ENV,
+  PLATFORM_COMMISSION_IN_PERCENTAGE,
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
 } from '@/config/config.utils';
@@ -184,12 +185,17 @@ export class StripeService {
           queryRunner,
         )) ?? {};
       for (const currOrderItem of order.orderItems) {
+        const platformCommissionInPercentage = this.config.get<number>(
+          PLATFORM_COMMISSION_IN_PERCENTAGE,
+        );
+        const productCost =
+          currOrderItem.quantity * currOrderItem.inventory.product.unitPrice;
+        const amountToPayToSeller =
+          productCost - (productCost * platformCommissionInPercentage) / 100;
         await this.payoutService.create(
           {
             seller: currOrderItem.inventory.owner,
-            amount:
-              currOrderItem.quantity *
-              currOrderItem.inventory.product.unitPrice,
+            amount: amountToPayToSeller,
             order: order,
           },
           queryRunner,
