@@ -210,10 +210,10 @@ export class StripeService {
   }
 
   async processPayouts(): Promise<void> {
-    const { data: pendingPayouts } = await this.payoutService.findWithFilters({
-      status: paymentStatuses.PENDING,
-    });
-
+    const { data: { payouts: pendingPayouts } = { payouts: [] } } =
+      (await this.payoutService.findWithFilters({
+        status: paymentStatuses.PENDING,
+      })) ?? {};
     for (const payout of pendingPayouts) {
       try {
         const seller: User = payout.seller as User;
