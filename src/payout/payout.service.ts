@@ -101,7 +101,7 @@ export class PayoutService {
     const query = this.payoutRepository.createQueryBuilder('payout');
 
     if (status) {
-      query.andWhere('product.status = :status', { status });
+      query.andWhere('payout.status = :status', { status });
     }
 
     return query;
