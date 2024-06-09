@@ -218,8 +218,8 @@ export class StripeService {
       try {
         const seller: User = payout.seller as User;
         await this.stripe.transfers.create({
-          amount: payout.amount,
-          currency: seller.currency,
+          amount: Math.floor((payout.amount / 1320) * 100), // I AM CONVERTING TO USD HERE BECAUSE TRANSFERRING TO TESTING ACCOUNT SUPPORTS ONLY USD SINCE THE ACCOUNT IS SET TO US, BUT IN REAL CASES, WHEN EVERYTHING IS IN THE US, THE CONVERSION IS NOT NEEDED
+          currency: 'usd',
           destination: seller.stripeAccountId,
         });
         await this.payoutService.update(payout.id, {
@@ -228,12 +228,11 @@ export class StripeService {
         });
         Logger.debug('All Pending Payouts Have been processed');
       } catch (err) {
-        this.logError(err);
+        this.logError(err.response?.message?.join(',') ?? err);
         throw new CustomInternalServerErrorException();
       }
     }
   }
-
   private constructEvent(
     payload: Buffer,
     sig: string,
