@@ -208,6 +208,30 @@ export class StripeService {
       });
     }
   }
+  async processPayouts() {
+    const { data: pendingPayouts } = await this.payoutService.findWithFilters({
+      status: paymentStatuses.PENDING,
+    });
+
+    for (const payout of pendingPayouts) {
+      try {
+        const seller: User = payout.seller as User;
+        await this.stripe.transfers.create({
+          amount: payout.amount,
+          currency: seller.currency,
+          destination: seller.stripeAccountId,
+        });
+        await this.payoutService.update(payout.id, {
+          status: paymentStatuses.PAID,
+          processedAt: new Date(),
+        });
+      } catch (err) {
+        this.logError(err);
+        throw new CustomInternalServerErrorException();
+      }
+    }
+  }
+
   private constructEvent(
     payload: Buffer,
     sig: string,
