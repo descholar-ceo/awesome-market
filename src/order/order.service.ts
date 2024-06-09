@@ -1,6 +1,7 @@
 import { PRODUCTION } from '@/common/constants.common';
 import {
   CustomBadRequest,
+  CustomForbiddenException,
   CustomInternalServerErrorException,
   CustomNotFoundException,
 } from '@/common/exception/custom.exception';
@@ -14,15 +15,15 @@ import { OrderItemService } from '@/order-item/order-item.service';
 import { User } from '@/user/entities/user.entity';
 import { UserService } from '@/user/user.service';
 import { isUserAdmin } from '@/user/user.utils';
-import {
-  ForbiddenException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { DataSource, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  DataSource,
+  QueryRunner,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { CreateOrderDto } from './dto/create-order.dto';
 import {
   FindOrderFiltersDto,
@@ -216,11 +217,9 @@ export class OrderService {
     id: string,
     updateOrderData: UpdateOrderDto,
     currUser: User,
+    queryRunner?: QueryRunner,
   ): Promise<OrderResponseDto> {
-    const order = (await this.findById(id))?.data;
-    if (!order) {
-      throw new NotFoundException(`Order with ID ${id} not found`);
-    }
+    const { data: order } = (await this.findById(id)) ?? {};
     if (
       !isUserAdmin(currUser) &&
       order.buyer?.id !== currUser.id &&
@@ -228,35 +227,46 @@ export class OrderService {
         (currItem) => currItem.inventory.owner.id === currUser.id,
       )
     ) {
-      throw new ForbiddenException('You are not allowed to update this order');
+      throw new CustomForbiddenException({
+        messages: ['You are not allowed to update this order'],
+      });
     }
     if (
       updateOrderData.status === orderStatuses.SHIPPING &&
       order.paymentStatus !== paymentStatuses.PAID
     ) {
-      throw new ForbiddenException(
-        'You cannot ship this order, because it is not paid yet',
-      );
+      throw new CustomForbiddenException({
+        messages: ['You cannot ship this order, because it is not paid yet'],
+      });
     }
     if (
       updateOrderData.status === orderStatuses.SHIPPING &&
       order.status !== orderStatuses.PROCESSING
     ) {
-      throw new ForbiddenException(
-        'You cannot ship this order, because it is not in PROCESSING status',
-      );
+      throw new CustomForbiddenException({
+        messages: [
+          'You cannot ship this order, because it is not in PROCESSING status',
+        ],
+      });
     }
     if (
       updateOrderData.status === orderStatuses.DELIVERED &&
       order.status !== orderStatuses.SHIPPING
     ) {
-      throw new ForbiddenException(
-        'You cannot mark this order as DELIVERED, because it was not in SHIPPING status',
-      );
+      throw new CustomForbiddenException({
+        messages: [
+          'You cannot mark this order as DELIVERED, because it was not in SHIPPING status',
+        ],
+      });
     }
     order.updatedBy = currUser;
     Object.assign(order, updateOrderData);
-    const updatedOrder = await this.orderRepository.save(order);
+    let updatedOrder: Order;
+    if (!!queryRunner) {
+      updatedOrder = await queryRunner.manager.save(order);
+    } else {
+      updatedOrder = await this.orderRepository.save(order);
+    }
 
     if (!!updatedOrder) {
       switch (updatedOrder.status) {

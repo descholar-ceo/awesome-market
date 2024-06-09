@@ -27,6 +27,8 @@ import { User } from '@/user/entities/user.entity';
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { StripProductLineDto } from './stripe.dto';
+import { PayoutService } from '@/payout/payout.service';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class StripeService {
@@ -35,6 +37,8 @@ export class StripeService {
     private readonly config: ConfigService,
     private readonly orderService: OrderService,
     private readonly mailService: MailService,
+    private readonly payoutService: PayoutService,
+    private readonly dataSource: DataSource,
   ) {
     this.stripe = new Stripe(this.config.get<string>(STRIPE_SECRET_KEY), {
       apiVersion: '2024-04-10',
@@ -164,7 +168,9 @@ export class StripeService {
         ],
       });
     }
-
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
     try {
       const order = await this.findOrderById(orderId);
       const { data: updatedOrder } =
@@ -175,8 +181,21 @@ export class StripeService {
             paymentStatus: paymentStatuses.PAID,
           },
           order.buyer,
+          queryRunner,
         )) ?? {};
-
+      for (const currOrderItem of order.orderItems) {
+        await this.payoutService.create(
+          {
+            seller: currOrderItem.inventory.owner,
+            amount:
+              currOrderItem.quantity *
+              currOrderItem.inventory.product.unitPrice,
+            order: order,
+          },
+          queryRunner,
+        );
+      }
+      await queryRunner.commitTransaction();
       if (!!updatedOrder) {
         const { html, text } = prepareOrderSuccessPaymentEmailBody({ order });
         await this.mailService.sendEmail({
@@ -189,8 +208,11 @@ export class StripeService {
         return { status: statusCodes.OK, message: statusMessages.OK };
       }
     } catch (err) {
+      await queryRunner.rollbackTransaction();
       this.logError(err);
       throw new CustomInternalServerErrorException();
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -206,12 +228,16 @@ export class StripeService {
       });
     }
 
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
     try {
       const order = await this.findOrderById(orderId);
       await this.orderService.update(
         orderId,
         { paymentStatus: paymentStatuses.FAILED },
         order.buyer,
+        queryRunner,
       );
       return { status: statusCodes.OK, message: statusMessages.OK };
     } catch (err) {
