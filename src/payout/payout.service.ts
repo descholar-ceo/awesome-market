@@ -1,12 +1,21 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { CreatePayoutDto } from './dto/create-payout.dto';
-import { QueryRunner, Repository } from 'typeorm';
-import { Payout } from './entities/payout.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CustomBadRequest } from '@/common/exception/custom.exception';
+import { CommonResponseDto } from '@/common/common.dtos';
+import { PRODUCTION } from '@/common/constants.common';
+import {
+  CustomBadRequest,
+  CustomNotFoundException,
+} from '@/common/exception/custom.exception';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 import { ConfigService } from '@/config/config.service';
 import { NODE_ENV } from '@/config/config.utils';
-import { PRODUCTION } from '@/common/constants.common';
+import { paymentStatuses } from '@/order/order.constants';
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
+import { QueryRunner, Repository, SelectQueryBuilder } from 'typeorm';
+import { CreatePayoutDto } from './dto/create-payout.dto';
+import { FindPayoutFiltersDto, PayoutResponseDto } from './dto/find-payout.dto';
+import { UpdatePayoutDto } from './dto/update-payout.dto';
+import { Payout } from './entities/payout.entity';
 
 @Injectable()
 export class PayoutService {
@@ -44,5 +53,57 @@ export class PayoutService {
       }
       return null;
     }
+  }
+
+  async findWithFilters(
+    filters: FindPayoutFiltersDto,
+  ): Promise<CommonResponseDto> {
+    const { status } = filters;
+    const findPayoutsQuery = this.buildFindPayoutsQuery(status);
+
+    const totalRecords = await findPayoutsQuery.getCount();
+    if (totalRecords === 0) {
+      throw new CustomNotFoundException({ messages: ['No records found'] });
+    }
+    const payouts = await findPayoutsQuery
+      .leftJoinAndSelect('payout.order', 'order')
+      .leftJoinAndSelect('payout.seller', 'seller')
+      .getMany();
+
+    return {
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data: {
+        payouts: plainToInstance(Payout, payouts, {
+          excludeExtraneousValues: true,
+        }),
+      },
+    };
+  }
+
+  async update(
+    id: string,
+    updatePayoutData: UpdatePayoutDto,
+  ): Promise<PayoutResponseDto> {
+    const payout = await this.payoutRepository.findOneBy({ id });
+    Object.assign(payout, { ...updatePayoutData });
+    const data = await this.payoutRepository.save(payout);
+    return {
+      status: statusCodes.OK,
+      message: statusMessages.OK,
+      data,
+    };
+  }
+
+  private buildFindPayoutsQuery(
+    status?: paymentStatuses,
+  ): SelectQueryBuilder<Payout> {
+    const query = this.payoutRepository.createQueryBuilder('payout');
+
+    if (status) {
+      query.andWhere('product.status = :status', { status });
+    }
+
+    return query;
   }
 }

@@ -1,4 +1,10 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreatePayoutDto } from './create-payout.dto';
+import { paymentStatuses } from '@/order/order.constants';
+import { IsEnum, IsOptional } from 'class-validator';
 
-export class UpdatePayoutDto extends PartialType(CreatePayoutDto) {}
+export class UpdatePayoutDto {
+  @IsOptional()
+  @IsEnum(paymentStatuses)
+  status?: paymentStatuses;
+  @IsOptional()
+  processedAt?: Date;
+}
