@@ -6,7 +6,14 @@ import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
 import { ADMIN_ROLE_NAME, SELLER_ROLE_NAME } from '@/role/role.constants';
 import { StripeService } from '@/stripe/stripe.service';
 import { UserService } from '@/user/user.service';
-import { Controller, Get, Param, UseGuards, UsePipes } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Param,
+  UseGuards,
+  UsePipes,
+} from '@nestjs/common';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('stripe-secured')
@@ -26,5 +33,12 @@ export class StripeSecuredController {
       userId,
       this.stripeService,
     );
+  }
+
+  @Roles([ADMIN_ROLE_NAME])
+  @Delete('/users/:id')
+  @UsePipes(new ValidateIdFromParam())
+  async remove(@Param('id') id: string): Promise<CommonResponseDto> {
+    return this.userService.remove(id, this.stripeService);
   }
 }

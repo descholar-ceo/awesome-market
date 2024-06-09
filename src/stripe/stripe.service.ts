@@ -196,6 +196,18 @@ export class StripeService {
       });
     }
   }
+
+  async deleteConnectedAccount(stripeAccountId: string) {
+    try {
+      const deletedAccount = await this.stripe.accounts.del(stripeAccountId);
+      return deletedAccount;
+    } catch (err) {
+      this.logError(err);
+      throw new CustomInternalServerErrorException({
+        messages: ['Failed to delete Stripe account'],
+      });
+    }
+  }
   private constructEvent(
     payload: Buffer,
     sig: string,
