@@ -21,17 +21,17 @@ import {
 import { FindUserFiltersDto, UsersResponseDto } from './dto/find-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('users')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('users')
+@ApiBearerAuth('Authorization')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME, BUYER_ROLE_NAME])
   @Get(':id')
-  @ApiBearerAuth('Authorization')
   @UsePipes(new ValidateIdFromParam())
   findOne(@Param('id') id: string) {
     return this.userService.findOneById(id);
@@ -39,7 +39,6 @@ export class UserController {
 
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME, BUYER_ROLE_NAME])
   @Patch(':id')
-  @ApiBearerAuth('Authorization')
   @UsePipes(new ValidateIdFromParam())
   update(
     @Param('id') id: string,
@@ -50,7 +49,10 @@ export class UserController {
 
   @Roles([ADMIN_ROLE_NAME])
   @Get()
-  @ApiBearerAuth('Authorization')
+  @ApiOperation({
+    summary: 'Find all users with filters',
+    description: 'It uses filters to fetch all users, alongside pagination',
+  })
   async findWithFilters(
     @Query() filters: FindUserFiltersDto,
   ): Promise<UsersResponseDto> {
