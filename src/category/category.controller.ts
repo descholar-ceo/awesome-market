@@ -26,11 +26,12 @@ import {
   FindCategoryFiltersDto,
 } from './dto/find-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('categories')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('categories')
+@ApiBearerAuth('Authorization')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
