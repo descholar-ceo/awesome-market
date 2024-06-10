@@ -28,7 +28,9 @@ import {
 } from './dto/find-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order.dto';
 import { OrderService } from './order.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('orders')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('orders')
 export class OrderController {

@@ -14,7 +14,9 @@ import {
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('stripe-secured')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('stripe-secured')
 export class StripeSecuredController {

@@ -25,7 +25,9 @@ import {
 } from './dto/find-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductService } from './product.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('products')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('products')
 export class ProductController {

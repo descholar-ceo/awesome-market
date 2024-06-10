@@ -21,7 +21,9 @@ import {
 import { FindUserFiltersDto, UsersResponseDto } from './dto/find-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('users')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('users')
 export class UserController {

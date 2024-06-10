@@ -16,13 +16,16 @@ import { StripeService } from './stripe.service';
 import { UserService } from '@/user/user.service';
 import { CommonResponseDto } from '@/common/common.dtos';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('stripe-public')
 @Controller('orders')
 export class StripeController {
   constructor(
     private readonly stripeService: StripeService,
     private readonly userService: UserService,
   ) {}
+
   @Get(':id/checkout')
   @UsePipes(new ValidateIdFromParam())
   async createCheckoutSession(
