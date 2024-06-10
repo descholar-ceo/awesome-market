@@ -14,11 +14,12 @@ import {
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('stripe-secured')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('stripe-secured')
+@ApiBearerAuth('Authorization')
 export class StripeSecuredController {
   constructor(
     private readonly stripeService: StripeService,

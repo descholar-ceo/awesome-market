@@ -20,11 +20,12 @@ import { RoleService } from './role.service';
 import { ValidateUniqueRolePipe } from '@/pipes/validate-record-uniqueness/validate-unique-role/validate-unique-role.pipe';
 import { ValidateIdFromParam } from '@/pipes/validate-uuid/validate-id-param';
 import { FindRoleFiltersDto } from './dto/find-role.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('roles')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('roles')
+@ApiBearerAuth('Authorization')
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 

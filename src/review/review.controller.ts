@@ -21,11 +21,12 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { ReviewResponseDto } from './dto/find-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewService } from './review.service';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('reviews')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('reviews')
+@ApiBearerAuth('Authorization')
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
