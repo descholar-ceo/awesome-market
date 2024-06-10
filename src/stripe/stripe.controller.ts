@@ -98,7 +98,7 @@ export class StripeController {
     );
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async processPayouts(): Promise<void> {
     return await this.stripeService.processPayouts();
   }
