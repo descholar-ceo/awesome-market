@@ -28,6 +28,17 @@ async function bootstrap() {
     .setDescription(
       'An online marketplace that allows users to buy and sell products, manage their inventory and process orders.',
     )
+    .addBearerAuth(
+      {
+        description: 'Please enter your access token',
+        name: 'Authorization',
+        bearerFormat: 'Bearer',
+        scheme: 'Bearer',
+        type: 'http',
+        in: 'Header',
+      },
+      'Authorization',
+    )
     .setVersion('1.0')
     .addTag('awesome-market')
     .build();
