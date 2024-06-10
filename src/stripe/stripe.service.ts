@@ -224,8 +224,8 @@ export class StripeService {
           seller.stripeAccountId,
         );
         await this.stripe.transfers.create({
-          amount: Math.floor((payout.amount / 1320) * 100),
-          currency: 'usd',
+          amount: Math.floor(payout.amount) * 100,
+          currency: seller.currency,
           destination: seller.stripeAccountId,
         });
         await this.payoutService.update(payout.id, {
