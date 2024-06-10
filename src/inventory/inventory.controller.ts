@@ -22,7 +22,9 @@ import { InventoryResponseDto } from './dto/find-inventory.dto';
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
 import { InventoryService } from './inventory.service';
 import { ValidateUuidPipe } from '@/pipes/validate-uuid/validate-uuid';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('inventories')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('inventories')
 export class InventoryController {

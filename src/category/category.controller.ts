@@ -26,7 +26,9 @@ import {
   FindCategoryFiltersDto,
 } from './dto/find-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('categories')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('categories')
 export class CategoryController {
