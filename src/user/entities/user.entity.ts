@@ -18,55 +18,68 @@ import {
 import { v4 as uuidV4 } from 'uuid';
 import { DEFAULT_SHIPPING_ADDRESS_VALUE } from '../user.constants';
 import { Payout } from '@/payout/entities/payout.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 @Entity()
 export class User {
   @PrimaryColumn()
   @Expose()
+  @ApiProperty()
   id: string;
 
   @Column({ unique: true })
   @Expose()
+  @ApiProperty()
   email: string;
 
   @Column({ unique: true })
   @Expose()
+  @ApiProperty()
   phoneNumber: string;
 
   @Column()
   @Exclude()
+  @ApiProperty()
   password: string;
 
   @Column()
   @Expose()
+  @ApiProperty()
   firstName: string;
 
   @Column()
   @Expose()
+  @ApiProperty()
   lastName: string;
 
   @Column({ default: true })
   @Expose()
+  @ApiProperty()
   isActive: boolean;
 
   @Column()
   @Expose()
+  @ApiProperty()
   createdAt: Date;
 
   @Column()
   @Expose()
+  @ApiProperty()
   updatedAt: Date;
 
   @Column({ nullable: true })
   @Expose()
+  @ApiProperty()
   shippingAddress?: string;
 
   @Column()
   @Expose()
+  @ApiProperty()
   stripeAccountId?: string;
 
   @Column({ default: 'rwf' })
   @Expose()
+  @ApiProperty()
   currency: string;
 
   // RELATIONS
@@ -77,34 +90,42 @@ export class User {
     inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
   })
   @Expose()
+  @ApiProperty({ type: [Role] })
   roles: Role[];
 
   @OneToMany(() => Category, (category) => category.createdBy)
   @Expose()
+  @ApiProperty({ type: [Category] })
   createdCategories: Category[];
 
   @OneToMany(() => Category, (category) => category.updatedBy)
   @Expose()
+  @ApiProperty({ type: [Category] })
   updatedCategories: Category[];
 
   @OneToMany(() => Product, (product) => product.createdBy)
   @Expose()
+  @ApiProperty({ type: [Product] })
   createdProducts: Product[];
 
   @OneToMany(() => Product, (product) => product.updatedBy)
   @Expose()
+  @ApiProperty({ type: [Product] })
   updatedProducts: Product[];
 
   @OneToMany(() => Inventory, (inventory) => inventory.owner)
   @Expose()
+  @ApiProperty({ type: [Inventory] })
   inventories: Inventory[];
 
   @OneToMany(() => Order, (order) => order.buyer)
   @Expose()
+  @ApiProperty({ type: [Order] })
   orders: Order[];
 
   @OneToMany(() => Payout, (payout) => payout.seller)
   @Expose()
+  @ApiProperty({ type: [Payout] })
   payouts: Payout[];
 
   @BeforeInsert()

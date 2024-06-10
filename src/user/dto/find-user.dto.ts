@@ -58,16 +58,24 @@ export class FindUserFiltersDto {
   sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc';
 }
 export class UsersDataDto {
+  @ApiProperty({ type: [User] })
   users: User[];
+  @ApiProperty({ type: PaginationDto })
   pagination: PaginationDto;
 }
 export class UsersResponseDto {
+  @ApiProperty()
   status: number;
+  @ApiProperty()
   message: string;
+  @ApiProperty({ type: UsersDataDto })
   data?: UsersDataDto;
 }
 export class UserResponseDto {
+  @ApiProperty()
   status: number;
+  @ApiProperty()
   message: string;
+  @ApiProperty({ type: User })
   data?: User;
 }
