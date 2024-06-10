@@ -28,7 +28,10 @@ import { prepareOrderSuccessPaymentEmailBody } from '@/order/order.utils';
 import { PayoutService } from '@/payout/payout.service';
 import { User } from '@/user/entities/user.entity';
 import { UserService } from '@/user/user.service';
-import { getNewStripeAccountOnboardingUrl } from '@/user/user.utils';
+import {
+  getNewStripeAccountOnboardingUrl,
+  preparePaymentForSellerToStripeExpressAccountMessageBody,
+} from '@/user/user.utils';
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { DataSource } from 'typeorm';
@@ -217,8 +220,11 @@ export class StripeService {
     for (const payout of pendingPayouts) {
       try {
         const seller: User = payout.seller as User;
+        const sellerLoginUrl = await this.createLoginLink(
+          seller.stripeAccountId,
+        );
         await this.stripe.transfers.create({
-          amount: Math.floor((payout.amount / 1320) * 100), // I AM CONVERTING TO USD HERE BECAUSE TRANSFERRING TO TESTING ACCOUNT SUPPORTS ONLY USD SINCE THE ACCOUNT IS SET TO US, BUT IN REAL CASES, WHEN EVERYTHING IS IN THE US, THE CONVERSION IS NOT NEEDED
+          amount: Math.floor((payout.amount / 1320) * 100),
           currency: 'usd',
           destination: seller.stripeAccountId,
         });
@@ -226,7 +232,20 @@ export class StripeService {
           status: paymentStatuses.PAID,
           processedAt: new Date(),
         });
-        Logger.debug('All Pending Payouts Have been processed');
+        const { html, text } =
+          preparePaymentForSellerToStripeExpressAccountMessageBody({
+            seller,
+            paidAmount: payout.amount,
+            stripeExpressAccountLoginUrl: sellerLoginUrl,
+          });
+        await this.mailService.sendEmail({
+          fromEmailAddress: this.config.get<string>(APP_MAILING_ADDRESS),
+          personalizations: [{ to: { email: seller.email } }],
+          emailSubject:
+            'Great News! You have Received a New Payment in Your Stripe Express Account',
+          emailHtmlBody: html,
+          emailTextBody: text,
+        });
       } catch (err) {
         this.logError(err.response?.message?.join(',') ?? err);
         throw new CustomInternalServerErrorException();
