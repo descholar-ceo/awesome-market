@@ -1,4 +1,7 @@
-import { CommonResponseDto } from '@/common/common.dtos';
+import {
+  CommonErrorResponseDto,
+  CommonResponseDto,
+} from '@/common/common.dtos';
 import { CurrentUser } from '@/decorators/current-user/current-user.decorator';
 import { Roles } from '@/decorators/roles/roles.decorator';
 import { AuthGuard } from '@/guards/auth/auth.guard';
@@ -21,7 +24,13 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { ReviewResponseDto } from './dto/find-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewService } from './review.service';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
 
 @ApiTags('reviews')
 @UseGuards(AuthGuard, RolesGuard)
@@ -31,6 +40,26 @@ export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
   @Post()
+  @ApiOperation({
+    summary: 'Create a new review',
+    description:
+      'It uses createReviewDto passed as request body to create a review',
+  })
+  @ApiResponse({
+    status: statusCodes.CREATED,
+    description: 'Created review details',
+    type: ReviewResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.BAD_REQUEST,
+    description: statusMessages.BAD_REQUEST,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.UNAUTHORIZED,
+    description: statusMessages.UNAUTHORIZED,
+    type: CommonErrorResponseDto,
+  })
   async create(
     @Body() createReviewDto: CreateReviewDto,
     @CurrentUser() currUser: User,
@@ -40,17 +69,61 @@ export class ReviewController {
 
   @Patch('/:id')
   @UsePipes(new ValidateIdFromParam())
+  @ApiOperation({
+    summary: 'Update a review',
+    description:
+      'It uses id passed as a param and updateReviewData passed as request body to update a review',
+  })
+  @ApiResponse({
+    status: statusCodes.OK,
+    description: 'Updated review details',
+    type: ReviewResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.BAD_REQUEST,
+    description: statusMessages.BAD_REQUEST,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.UNAUTHORIZED,
+    description: statusMessages.UNAUTHORIZED,
+    type: CommonErrorResponseDto,
+  })
   update(
     @Param('id') id: string,
-    @Body() updateReviewDto: UpdateReviewDto,
+    @Body() updateReviewData: UpdateReviewDto,
     @CurrentUser() currUser: User,
   ) {
-    return this.reviewService.update(id, updateReviewDto, currUser);
+    return this.reviewService.update(id, updateReviewData, currUser);
   }
 
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Delete(':id')
   @UsePipes(new ValidateIdFromParam())
+  @ApiOperation({
+    summary: 'Deletes a review',
+    description: 'It uses id passed as a param to delete a review',
+  })
+  @ApiResponse({
+    status: statusCodes.OK,
+    description: 'Deleted review details',
+    type: ReviewResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.BAD_REQUEST,
+    description: statusMessages.BAD_REQUEST,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.UNAUTHORIZED,
+    description: statusMessages.UNAUTHORIZED,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.FORBIDDEN,
+    description: statusMessages.FORBIDDEN,
+    type: CommonErrorResponseDto,
+  })
   async remove(
     @Param('id') id: string,
     @CurrentUser() currUser: User,
@@ -61,6 +134,30 @@ export class ReviewController {
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Get(':id')
   @UsePipes(new ValidateIdFromParam())
+  @ApiOperation({
+    summary: 'Fetches a review',
+    description: 'It uses id passed as a param to fetch a review',
+  })
+  @ApiResponse({
+    status: statusCodes.OK,
+    description: 'Fetched review details',
+    type: ReviewResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.BAD_REQUEST,
+    description: statusMessages.BAD_REQUEST,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.UNAUTHORIZED,
+    description: statusMessages.UNAUTHORIZED,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.FORBIDDEN,
+    description: statusMessages.FORBIDDEN,
+    type: CommonErrorResponseDto,
+  })
   findById(@Param('id') id: string) {
     return this.reviewService.findById(id);
   }
