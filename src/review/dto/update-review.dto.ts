@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNumber,
   IsOptional,
@@ -11,8 +12,10 @@ export class UpdateReviewDto {
   @IsNumber()
   @IsPositive()
   @Max(5)
+  @ApiProperty({ maximum: 5 })
   rating: number;
   @IsOptional()
   @IsString()
+  @ApiProperty()
   comment: string;
 }
