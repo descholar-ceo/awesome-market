@@ -39,7 +39,6 @@ export class User {
 
   @Column()
   @Exclude()
-  @ApiProperty()
   password: string;
 
   @Column()

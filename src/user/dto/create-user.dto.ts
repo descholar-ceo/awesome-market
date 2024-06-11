@@ -33,6 +33,6 @@ export class CreateUserDto {
   phoneNumber: string;
 
   @IsOptional()
-  @ApiProperty({ type: [Role] })
+  @ApiProperty({ type: [Role], required: false })
   roles?: Role[];
 }
