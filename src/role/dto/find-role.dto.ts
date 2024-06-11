@@ -38,7 +38,7 @@ export class FindRoleFiltersDto {
   sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc';
 }
 export class RolesDataDto {
-  @ApiProperty()
+  @ApiProperty({ type: [Role] })
   roles: Role[];
   @ApiProperty()
   pagination: PaginationDto;

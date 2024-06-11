@@ -62,6 +62,11 @@ export class RoleController {
     description: statusMessages.CONFLICT,
     type: CommonErrorResponseDto,
   })
+  @ApiResponse({
+    status: statusCodes.UNAUTHORIZED,
+    description: statusMessages.UNAUTHORIZED,
+    type: CommonErrorResponseDto,
+  })
   async create(@Body(ValidateUniqueRolePipe) createRoleData: CreateRoleDto) {
     return await this.roleService.create(createRoleData);
   }
