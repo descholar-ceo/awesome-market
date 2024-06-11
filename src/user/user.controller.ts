@@ -68,6 +68,11 @@ export class UserController {
     description: statusMessages.FORBIDDEN,
     type: CommonErrorResponseDto,
   })
+  @ApiResponse({
+    status: statusCodes.BAD_REQUEST,
+    description: statusMessages.BAD_REQUEST,
+    type: CommonErrorResponseDto,
+  })
   findById(@Param('id') id: string): Promise<UserResponseDto> {
     return this.userService.findOneById(id);
   }
@@ -98,6 +103,16 @@ export class UserController {
   @ApiResponse({
     status: statusCodes.FORBIDDEN,
     description: statusMessages.FORBIDDEN,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.BAD_REQUEST,
+    description: statusMessages.BAD_REQUEST,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.CONFLICT,
+    description: statusMessages.CONFLICT,
     type: CommonErrorResponseDto,
   })
   update(
