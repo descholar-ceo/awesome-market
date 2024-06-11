@@ -28,7 +28,14 @@ import {
 } from './dto/find-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order.dto';
 import { OrderService } from './order.service';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { statusCodes, statusMessages } from '@/common/utils/status.utils';
+import { CommonErrorResponseDto } from '@/common/common.dtos';
 
 @ApiTags('orders')
 @UseGuards(AuthGuard, RolesGuard)
@@ -39,6 +46,31 @@ export class OrderController {
 
   @Roles([ADMIN_ROLE_NAME, BUYER_ROLE_NAME])
   @Post()
+  @ApiOperation({
+    summary: 'Create a new order',
+    description:
+      'It uses createReviewDto passed as request body to create a order',
+  })
+  @ApiResponse({
+    status: statusCodes.CREATED,
+    description: 'Created order details',
+    type: OrderResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.BAD_REQUEST,
+    description: statusMessages.BAD_REQUEST,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.UNAUTHORIZED,
+    description: statusMessages.UNAUTHORIZED,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.FORBIDDEN,
+    description: statusMessages.FORBIDDEN,
+    type: CommonErrorResponseDto,
+  })
   create(
     @Body() createOrderDto: CreateOrderDto[],
     @CurrentUser() currUser: User,
@@ -48,6 +80,30 @@ export class OrderController {
 
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Get()
+  @ApiOperation({
+    summary: 'Find all orders with filters',
+    description: 'It uses filters to fetch all orders, alongside pagination',
+  })
+  @ApiResponse({
+    status: statusCodes.OK,
+    description: 'Orders list with pagination',
+    type: OrdersResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.NOT_FOUND,
+    description: statusMessages.NOT_FOUND,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.UNAUTHORIZED,
+    description: statusMessages.UNAUTHORIZED,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.FORBIDDEN,
+    description: statusMessages.FORBIDDEN,
+    type: CommonErrorResponseDto,
+  })
   async findWithFilters(
     @Query() filters: FindOrderFiltersDto,
   ): Promise<OrdersResponseDto> {
@@ -57,13 +113,62 @@ export class OrderController {
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Get(':id')
   @UsePipes(new ValidateIdFromParam())
-  findById(@Param('id') id: string) {
-    return this.orderService.findById(id);
+  @ApiOperation({
+    summary: 'Find order details',
+    description: 'It uses orderId passed as a param to fetch orders details',
+  })
+  @ApiResponse({
+    status: statusCodes.OK,
+    description: 'Order details',
+    type: OrderResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.NOT_FOUND,
+    description: statusMessages.NOT_FOUND,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.UNAUTHORIZED,
+    description: statusMessages.UNAUTHORIZED,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.FORBIDDEN,
+    description: statusMessages.FORBIDDEN,
+    type: CommonErrorResponseDto,
+  })
+  async findById(@Param('id') id: string): Promise<OrderResponseDto> {
+    return await this.orderService.findById(id);
   }
 
   @Roles([ADMIN_ROLE_NAME, SELLER_ROLE_NAME])
   @Patch(':id/update-status')
   @UsePipes(new ValidateIdFromParam())
+  @ApiOperation({
+    summary: 'Update order',
+    description:
+      'It uses orderId passed as a param and updateStatusData to update order status',
+  })
+  @ApiResponse({
+    status: statusCodes.OK,
+    description: 'Updated Order details',
+    type: OrderResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.NOT_FOUND,
+    description: statusMessages.NOT_FOUND,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.UNAUTHORIZED,
+    description: statusMessages.UNAUTHORIZED,
+    type: CommonErrorResponseDto,
+  })
+  @ApiResponse({
+    status: statusCodes.FORBIDDEN,
+    description: statusMessages.FORBIDDEN,
+    type: CommonErrorResponseDto,
+  })
   async updateOrderStatus(
     @Param('id') id: string,
     @Body() updateStatusData: UpdateOrderStatusDto,
