@@ -189,6 +189,7 @@ Go to http://localhost:[HOST_PORT]/api-docs
 
 ### Platform operations
 #### Payment implementation
+![Payment system big picture](./docs/payment-big-picture.png)
 
 ### Contribution
 Feel free to fork this repository and make contributions. Pull requests are welcome.
