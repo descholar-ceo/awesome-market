@@ -24,7 +24,7 @@ export class Role {
 
   @ManyToMany(() => User, (user) => user.roles)
   @Expose()
-  @ApiProperty()
+  @ApiProperty({ type: [User] })
   users: User[];
 
   @Column()
