@@ -84,11 +84,11 @@ In case the server fails to start, and throws this error: `ERROR [ExceptionHandl
 
 ### Development
 After a successful installation, you can start developing features
-#### Environment variables validation
+### Environment variables validation
 To ensure environment safety and consistency across development environments, the application includes logic to validate environment variables before starting the server using [Joi](https://www.npmjs.com/package//joi?activeTab=versions). Some environment variables are marked as required, while others are optional. If any value is added that is not validated, the server will not start. This ensures that anyone working on this project has the same environment setup, promoting consistency and preventing configuration errors.
-#### Feature testing
+### Feature testing
 :warning: Currently Unit tests are missing, but I will add them very soon
-##### Configure SendGrid API Key and Email Address
+#### Configure SendGrid API Key and Email Address
 In order to make sure that all features work correctly, including live email notifications, you need a SendGrid API key and a whitelisted email from SendGrid. Follow these steps to obtain the required values:
 1. **Sign up for SendGrid:** If you don't already have a SendGrid account, sign up at [SendGrid](https://sendgrid.com/).
 2. **Create an API Key:**
@@ -105,7 +105,7 @@ In order to make sure that all features work correctly, including live email not
 SENDGRID_API_KEY=your_sendgrid_api_key
 APP_MAILING_ADDRESS=your_whitelisted_email
 ```
-##### Configure Stripe API Key and Webhook
+#### Configure Stripe API Key and Webhook
 To enable payment processing with Stripe, follow these steps:
 1. **Sign up for Stripe:** If you don't already have a Stripe account, sign up at [Stripe](https://stripe.com/).
 2. **Obtain API Keys:**
@@ -129,6 +129,13 @@ To enable payment processing with Stripe, follow these steps:
 STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 ```
+4. **Enable Stripe Connect**
+Enabling this stripe configuration will make it possible for sellers to receive their payouts
+- Log in to your Stripe Dashboard.
+- Navigate to Settings > Connect.
+- Click on Get started with Connect and follow the instructions to enable Stripe Connect for your account.
+- **Platform branding:** Customize the branding for your connected accounts to match your platform's branding.
+
 #### Migrations
 ##### Creating an empty migration file
 1. Before creating a migration, you need to be using the same node-version specified by the project. To do that, open a terminal, navigate to `awesome-market` directory and run the following command:
