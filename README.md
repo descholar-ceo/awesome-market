@@ -130,6 +130,7 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 ```
 4. **Enable Stripe Connect**
+
 Enabling this stripe configuration will make it possible for sellers to receive their payouts
 - Log in to your Stripe Dashboard.
 - Navigate to Settings > Connect.
