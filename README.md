@@ -188,6 +188,25 @@ You can find the db schema pdf file inside the the `awesome-market/db/awesome-ma
 Go to http://localhost:[HOST_PORT]/api-docs
 
 ### Platform operations
+
+All the APIs have the same format of responses:
+- For success response we have: 
+```http
+{
+  status: 200,
+  message: string,
+  data: any
+}
+```
+
+- For a failure response we have:
+```http
+{
+  statusCode: number,
+  message: [string],
+  error: string
+}
+```
 #### Payment implementation
 ![Payment system big picture](./docs/payment-big-picture.png)
 
